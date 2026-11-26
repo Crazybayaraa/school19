@@ -69,8 +69,7 @@ html.a11y .lang-switch a[aria-current="true"] { outline: 3px solid var(--c-accen
 .nav { margin-left: 2.5rem; margin-right: auto; }
 .header__cta { flex-shrink: 0; }
 .brand { display: flex; align-items: center; gap: .7rem; text-decoration: none; color: var(--c-primary); }
-.brand__logo { width: 44px; height: 44px; border: 2.5px solid var(--c-primary); border-radius: 10px 10px 22px 22px; display: grid; place-items: center; font-weight: 800; font-size: .8rem; letter-spacing: -.03em; flex-shrink: 0; color: var(--c-primary); position: relative; }
-.brand__logo::after { content: ""; position: absolute; top: -2.5px; right: -2.5px; width: 12px; height: 12px; background: var(--c-accent); border-radius: 0 8px 0 4px; }
+.brand__logo { width: 56px; height: 56px; flex-shrink: 0; object-fit: contain; display: block; }
 .brand__name { font-weight: 800; line-height: 1.1; font-size: .9rem; text-transform: uppercase; letter-spacing: .02em; max-width: 16rem; }
 .brand__name small { display: block; color: var(--c-muted); font-weight: 500; font-size: .75rem; text-transform: none; letter-spacing: 0; margin-top: 2px; }
 
@@ -290,10 +289,10 @@ html.a11y[data-scheme] .doc-list .ext, html.a11y[data-scheme] .lang-switch {
 }
 html.a11y[data-scheme] .tile, html.a11y[data-scheme] .btn, html.a11y[data-scheme] .promo, html.a11y[data-scheme] .card { border: 2px solid var(--a-fg) !important; }
 html.a11y[data-scheme] a, html.a11y[data-scheme] .stats b, html.a11y[data-scheme] .card p, html.a11y[data-scheme] p,
-html.a11y[data-scheme] .card__icon, html.a11y[data-scheme] .brand__logo, html.a11y[data-scheme] .brand { color: var(--a-fg) !important; }
-html.a11y[data-scheme] .card__icon, html.a11y[data-scheme] .brand__logo { background: transparent !important; border-color: var(--a-fg) !important; }
+html.a11y[data-scheme] .card__icon, html.a11y[data-scheme] .brand { color: var(--a-fg) !important; }
+html.a11y[data-scheme] .card__icon { background: transparent !important; border-color: var(--a-fg) !important; }
 html.a11y[data-scheme] .tile::before, html.a11y[data-scheme] .promo__img::after,
-html.a11y[data-scheme] .news-card::after, html.a11y[data-scheme] .brand__logo::after { display: none; }
+html.a11y[data-scheme] .news-card::after { display: none; }
 html.a11y[data-scheme] * { box-shadow: none !important; }
 html.a11y[data-scheme] .sidenav a[aria-current="page"] { outline: 3px solid var(--a-fg); background: transparent; color: var(--a-fg); }
 html.a11y[data-scheme="wb"] { --a-bg: #fff; --a-fg: #000; }
@@ -333,3 +332,10 @@ html.a11y[data-scheme="beige"] { --a-bg: #f7f3d6; --a-fg: #4d4b43; }
   .has-sub > a::after { display: none; }
 }
 html.a11y[data-scheme] .submenu { background: var(--a-bg) !important; border: 2px solid var(--a-fg) !important; }
+
+/* ---------- Образовательные материалы ---------- */
+.lead { font-size: 1.1rem; max-width: 52rem; }
+.link-list { padding-left: 1.2rem; margin: 0 0 1.5rem; }
+.link-list li { margin-bottom: .45rem; }
+.link-list a { font-weight: 600; }
+.grid + h3 { margin-top: 2rem; }

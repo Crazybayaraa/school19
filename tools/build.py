@@ -161,6 +161,7 @@ def layout(title, body, rel, current="", crumbs=None):
         ("index.html", L("Главная", "Home", "Нүүр"), "home"),
         ("sveden/index.html", L("Сведения об ОО", "About the School", "Сургуулийн тухай"), "sveden"),
         ("index.html#news", L("Новости", "News", "Мэдээ"), "news"),
+        ("materials/index.html", L("Образовательные материалы", "Learning Materials", "Сургалтын материал"), "materials"),
         ("index.html#parents", L("Родителям", "For Parents", "Эцэг эхчүүдэд"), "parents"),
         ("contacts.html", L("Контакты", "Contacts", "Холбоо барих"), "contacts"),
     ]
@@ -168,7 +169,7 @@ def layout(title, body, rel, current="", crumbs=None):
     subs = {
         "sveden": [(f"{p}sveden/{s}/index.html", n) for s, n in zip(SVEDEN_SLUGS, sveden_names())],
         "parents": [
-            ("https://www.gosuslugi.ru/", L("Запись в 1-й класс", "Grade 1 enrolment", "1-р ангид бүртгүүлэх")),
+            ("https://e-mongolia.mn/news/n/8642", L("Запись в 1-й класс", "Grade 1 enrolment", "1-р ангид бүртгүүлэх")),
             ("https://myschool.edu.ru/", L("Электронный дневник", "Electronic diary", "Цахим өдрийн тэмдэглэл")),
             (f"{p}sveden/catering/index.html", L("Меню питания", "School menu", "Хоолны цэс")),
             (f"{p}sveden/vacant/index.html", L("Свободные места", "Vacant places", "Сул орон тоо")),
@@ -226,6 +227,9 @@ def layout(title, body, rel, current="", crumbs=None):
   <title>{title} — {S["short"]}</title>
   <meta name="description" content="{L("Официальный сайт", "Official website of", "Албан ёсны вэбсайт —")} {S["short"]}, {S["city"]}">
 {alternates}
+  <link rel="icon" href="{top}favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="{top}assets/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="{top}assets/img/apple-touch-icon.png">
   <link rel="stylesheet" href="{top}assets/css/style.css?v={asset_ver("assets/css/style.css")}">
   <script>try{{var s=JSON.parse(localStorage.getItem('a11y-settings'));if(s&&s.on)document.documentElement.classList.add('a11y')}}catch(e){{}}</script>
 </head>
@@ -274,7 +278,7 @@ def layout(title, body, rel, current="", crumbs=None):
 <header class="header">
   <div class="container">
     <a class="brand" href="{p}index.html">
-      <span class="brand__logo" aria-hidden="true">№19</span>
+      <img class="brand__logo" src="{top}assets/img/logo-256.png" width="56" height="56" alt="">
       <span class="brand__name">{S["short"]}<small>{S["city"]}</small></span>
     </a>
     <button class="nav-toggle" type="button" aria-controls="main-nav" aria-expanded="false">☰ {L("Меню", "Menu", "Цэс")}</button>
@@ -283,7 +287,7 @@ def layout(title, body, rel, current="", crumbs=None):
 {nav}
       </ul>
     </nav>
-    <a class="btn btn--primary btn--sm header__cta" href="https://www.gosuslugi.ru/" rel="noopener">{L("Подать заявление", "Apply", "Өргөдөл гаргах")}</a>
+    <a class="btn btn--primary btn--sm header__cta" href="https://e-mongolia.mn/news/n/8642" rel="noopener">{L("Участвовать", "Participate", "Оролцох")}</a>
   </div>
 </header>
 
@@ -297,7 +301,7 @@ def layout(title, body, rel, current="", crumbs=None):
     <div class="footer__grid">
       <div>
         <a class="brand" href="{p}index.html">
-          <span class="brand__logo" aria-hidden="true">№19</span>
+          <img class="brand__logo" src="{top}assets/img/logo-256.png" width="56" height="56" alt="">
           <span class="brand__name">{S["short"]}<small>{S["city"]}</small></span>
         </a>
         <p>{S["full"]}</p>
@@ -784,10 +788,10 @@ def home():
                             "Сурагч бүр авьяас чадвараа нээх орчин үеийн сургууль")}</p>
       </div>
       <div class="hero-pill">
-        <p>{L("Приём в 1-й класс на 2027/2028 учебный год начинается 1 апреля",
-              "Grade 1 admissions for 2027/2028 open on 1 April",
-              "2027/2028 оны 1-р ангийн элсэлт 4-р сарын 1-нд эхэлнэ")} <span class="ico" aria-hidden="true">🎒</span></p>
-        <a class="btn btn--primary btn--sm" href="https://www.gosuslugi.ru/" rel="noopener">{L("Подать заявление", "Apply", "Өргөдөл гаргах")}</a>
+        <p>{L("Чемпионат по баскетболу",
+              "Basketball championship",
+              "Сагсан бөмбөгийн аварга шалгаруулах тэмцээн")} <span class="ico" aria-hidden="true">🏀</span></p>
+        <a class="btn btn--primary btn--sm" href="https://e-mongolia.mn/news/n/8642" rel="noopener">{L("Участвовать", "Participate", "Оролцох")}</a>
       </div>
     </div>
     <div class="container" style="margin-top:2.2rem">
@@ -853,7 +857,7 @@ def home():
     <div class="container">
       <div class="section__head"><h2>{L("Родителям и ученикам", "For parents and students", "Эцэг эх, сурагчдад")}</h2></div>
       <div class="grid grid--4">
-        <a class="card" href="https://www.gosuslugi.ru/" rel="noopener"><span class="card__icon" aria-hidden="true">📝</span><h3>{L("Запись в 1-й класс", "Grade 1 enrolment", "1-р ангид бүртгүүлэх")}</h3><p>{L("Заявление через Госуслуги", "Apply via Gosuslugi", "Госуслуги-ээр өргөдөл гаргах")}</p></a>
+        <a class="card" href="https://e-mongolia.mn/news/n/8642" rel="noopener"><span class="card__icon" aria-hidden="true">📝</span><h3>{L("Запись в 1-й класс", "Grade 1 enrolment", "1-р ангид бүртгүүлэх")}</h3><p>{L("Заявление через E-Mongolia", "Apply via E-Mongolia", "E-Mongolia-гаар өргөдөл гаргах")}</p></a>
         <a class="card" href="https://myschool.edu.ru/" rel="noopener"><span class="card__icon" aria-hidden="true">📚</span><h3>{L("Электронный дневник", "Electronic diary", "Цахим өдрийн тэмдэглэл")}</h3><p>{L("ФГИС «Моя школа»", "“My School” platform", "«Моя школа» платформ")}</p></a>
         <a class="card" href="sveden/catering/index.html"><span class="card__icon" aria-hidden="true">🍎</span><h3>{L("Меню питания", "Menu", "Хоолны цэс")}</h3><p>{L("Ежедневное меню столовой", "Daily canteen menu", "Өдөр тутмын цэс")}</p></a>
         <a class="card" href="sveden/vacant/index.html"><span class="card__icon" aria-hidden="true">🪑</span><h3>{L("Свободные места", "Vacant places", "Сул орон тоо")}</h3><p>{L("Вакантные места для приёма", "Places available for admission", "Элсэлтийн сул орон тоо")}</p></a>
@@ -907,6 +911,117 @@ def sveden_index():
                   crumbs=[(L("Главная", "Home", "Нүүр"), "index.html"), (title, None)])
 
 
+# ------------------------------------------------------------------ образовательные материалы (ЭИОС)
+EBOOKS = [
+    ("Школа фей", "Барбара Розу", "docs/ebooks/shkola-fey.pdf"),
+    ("Сказки для самых маленьких", "С. Маршак", "docs/ebooks/skazki-dlya-samykh-malenkikh.pdf"),
+    ("Школьники-детективы", "Александр Калинина", "docs/ebooks/shkolniki-detektivy.pdf"),
+]
+
+EIOS_RESOURCES = [
+    ("https://resh.edu.ru/", L("Российская электронная школа", "Russian Electronic School", "Оросын цахим сургууль"),
+     L("Интерактивные уроки по всему школьному курсу с 1 по 11 класс от лучших учителей страны. Уроки соответствуют ФГОС; задания даны по типу экзаменационных тестов и подходят для подготовки к ОГЭ и ЕГЭ.",
+       "Interactive lessons covering the whole school curriculum for grades 1–11, aligned with the federal standards; exercises follow the OGE/EGE exam format.",
+       "1–11-р ангийн бүх хичээлийн интерактив хичээлүүд. Холбооны стандартад нийцсэн, ОГЭ, ЕГЭ шалгалтад бэлтгэх даалгавартай.")),
+    ("http://school-collection.edu.ru/", L("Единая коллекция цифровых образовательных ресурсов", "Unified Collection of Digital Educational Resources", "Цахим боловсролын нөөцийн нэгдсэн сан"),
+     L("Цифровые образовательные ресурсы, методические материалы, тематические коллекции и инструменты для поддержки учебной деятельности.",
+       "Digital learning resources, teaching materials, thematic collections and tools to support learning.",
+       "Цахим сургалтын нөөц, арга зүйн материал, сэдэвчилсэн цуглуулга, сургалтыг дэмжих хэрэгслүүд.")),
+    ("https://sbooks.gnpbu.ru/", L("Электронная библиотека учебников", "Electronic textbook library", "Сурах бичгийн цахим номын сан"),
+     L("Российское образование: электронные версии учебников.", "Russian education: electronic versions of textbooks.", "Сурах бичгүүдийн цахим хувилбар.")),
+    ("https://uchi.ru/", "Учи.ру", L("Онлайн-платформа, где ученики изучают школьные предметы в интерактивной форме; здесь же проводятся предметные олимпиады.",
+                                      "An online platform for learning school subjects interactively, with subject olympiads.",
+                                      "Хичээлүүдийг интерактив хэлбэрээр судлах онлайн платформ, хичээлийн олимпиадтай.")),
+    ("https://www.yaklass.ru/", "ЯКласс", L("Тестирование знаний и домашние задания в электронном виде; для ученика — электронные рабочие тетради и тренажёр по школьной программе.",
+                                              "Online tests and homework; electronic workbooks and practice for students.",
+                                              "Цахим шалгалт, гэрийн даалгавар; сурагчдад зориулсан цахим дасгалын дэвтэр.")),
+    ("https://educont.ru/", L("Цифровой образовательный контент", "Digital Educational Content", "Цахим боловсролын контент"),
+     L("Бесплатный доступ к образовательным онлайн-платформам для школьников и учителей.", "Free access to online learning platforms for students and teachers.",
+       "Сурагч, багш нарт онлайн сургалтын платформыг үнэгүй ашиглах боломж.")),
+]
+
+EIOS_LINKS = [
+    (L("Онлайн-обучение", "Online learning", "Онлайн сургалт"), [
+        ("http://math-ege.sdamgia.ru/", "math-ege.sdamgia.ru", L("подготовка к ЕГЭ и ОГЭ", "OGE/EGE exam practice", "ОГЭ, ЕГЭ-д бэлтгэх")),
+        ("http://childrenscience.ru/", "childrenscience.ru", L("курсы по школьной программе", "school curriculum courses", "сургуулийн хөтөлбөрийн сургалт")),
+    ]),
+    (L("Лингвистика", "Languages and literature", "Хэл, уран зохиол"), [
+        ("http://vsrussian.com/", "vsrussian.com", L("весёлый и увлекательный способ изучать русский язык", "a fun way to learn Russian", "орос хэлийг сонирхолтой сурах")),
+        ("http://briefly.ru/", "briefly.ru", L("2000 произведений школьной программы в кратком изложении", "2,000 school-curriculum works in summary", "сургуулийн хөтөлбөрийн 2000 зохиолын товчлол")),
+        ("http://lingualeo.com/", "lingualeo.com", L("интерактивный сервис для изучения английского языка", "interactive English learning", "англи хэлийг интерактив сурах")),
+        ("http://gostei.ru/", "gostei.ru", L("детская библиотека: программные произведения по литературе для 1–11 классов", "children's library of curriculum literature, grades 1–11", "1–11-р ангийн уран зохиолын хүүхдийн номын сан")),
+        ("http://gramota.ru/", "gramota.ru", L("справочный портал по правилам русского языка", "Russian language reference portal", "орос хэлний дүрмийн лавлах")),
+        ("http://itra.ru/", "itra.ru", L("биографии писателей, краткие содержания и тексты произведений", "author biographies, summaries and full texts", "зохиолчдын намтар, товчлол, бүрэн эх")),
+        ("http://bibliotekar.ru/", "bibliotekar.ru", L("электронная библиотека нехудожественной литературы", "non-fiction e-library", "уран бус зохиолын цахим номын сан")),
+    ]),
+]
+
+
+def materials():
+    top = "../" if CUR == "ru" else "../../"
+    view = L("Просмотр", "Preview", "Харах")
+    title = L("Образовательные материалы", "Learning Materials", "Сургалтын материал")
+    intro = L(
+        "Электронная информационно-образовательная среда школы (ЭИОС) — совокупность электронных информационных и образовательных ресурсов, технологий и средств, обеспечивающих освоение обучающимися образовательных программ начального общего, основного общего и среднего общего образования.",
+        "The school's electronic learning environment brings together digital information and learning resources, technologies and tools that support students in primary, basic and secondary education.",
+        "Сургуулийн цахим сургалтын орчин нь бага, суурь, бүрэн дунд боловсролын хөтөлбөрийг эзэмшихэд туслах цахим мэдээлэл, сургалтын нөөц, технологи, хэрэгслийн цогц юм.")
+    provides = [
+        L("доступ к учебным планам, рабочим программам, изданиям электронных библиотек и электронным образовательным ресурсам;",
+          "access to curricula, syllabi, e-libraries and digital learning resources;",
+          "сургалтын төлөвлөгөө, хөтөлбөр, цахим номын сан, цахим сургалтын нөөцөд хандах;"),
+        L("фиксацию хода образовательного процесса, результатов текущей и промежуточной аттестации;",
+          "recording of learning progress and assessment results;",
+          "сургалтын явц, явцын болон завсрын үнэлгээний үр дүнг бүртгэх;"),
+        L("формирование электронного портфолио обучающегося;", "electronic student portfolios;", "сурагчийн цахим портфолио бүрдүүлэх;"),
+        L("взаимодействие участников образовательного процесса, в том числе через сеть «Интернет»;",
+          "communication between students, parents and teachers, including online;",
+          "сургалтын оролцогчдын хооронд, тэр дундаа интернэтээр харилцах;"),
+        L("проведение занятий с применением электронного обучения и дистанционных образовательных технологий.",
+          "e-learning and distance learning.", "цахим болон зайн сургалт явуулах."),
+    ]
+    res = "\n".join(
+        f'        <a class="card" href="{u}" rel="noopener" target="_blank"><h3>{n}</h3><p>{d}</p></a>'
+        for u, n, d in EIOS_RESOURCES
+    )
+    groups = "".join(
+        f'\n      <h3>{g}</h3>\n      <ul class="link-list">'
+        + "".join(f'<li><a href="{u}" rel="noopener" target="_blank">{n}</a> — {d}</li>' for u, n, d in items)
+        + "</ul>"
+        for g, items in EIOS_LINKS
+    )
+    books = "\n".join(
+        f'        <li><a href="{top}{f}" target="_blank"><span class="ext">PDF</span>«{t}» — {a}</a>'
+        f'<details class="doc-preview"><summary>{view}</summary><iframe src="{top}{f}#view=FitH" loading="lazy" title="{t}"></iframe></details></li>'
+        for t, a, f in EBOOKS
+    )
+    body = f"""
+  <div class="container" style="padding:2.5rem 0 4rem">
+    <p class="lead">{intro}</p>
+    {h2("ЭИОС школы обеспечивает", "What the environment provides", "Цахим орчин юу олгодог вэ")}
+    <ul>{"".join(f"<li>{x}</li>" for x in provides)}</ul>
+
+    {h2("Электронные образовательные ресурсы", "Digital learning resources", "Цахим сургалтын нөөц")}
+    <div class="grid grid--3">
+{res}
+    </div>
+    {groups}
+
+    {h2("Электронные книги", "E-books", "Цахим ном")}
+    <p>{L("Детям и родителям", "For children and parents", "Хүүхэд, эцэг эхчүүдэд")}</p>
+    <ul class="doc-list">
+{books}
+    </ul>
+
+    {h2("Учебные планы и рабочие программы", "Curricula and syllabi", "Сургалтын төлөвлөгөө, хөтөлбөр")}
+    <p>{L("Учебные планы и рабочие программы по предметам размещены в разделе",
+          "Curricula and subject syllabi are published in the section",
+          "Сургалтын төлөвлөгөө, хичээлийн хөтөлбөрүүдийг дараах хэсэгт байршуулсан:")}
+       <a href="../sveden/education/index.html">{L("«Сведения об образовательной организации» → «Образование»", "About the School → Education", "Сургуулийн тухай → Боловсрол")}</a>.</p>
+  </div>"""
+    return layout(title, body, "materials/index.html", current="materials",
+                  crumbs=[(L("Главная", "Home", "Нүүр"), "index.html"), (title, None)])
+
+
 def contacts():
     S = school()
     title = L("Контакты", "Contacts", "Холбоо барих")
@@ -936,9 +1051,10 @@ if __name__ == "__main__":
         base = ROOT if code == "ru" else ROOT / code
         write(base / "index.html", home())
         write(base / "contacts.html", contacts())
+        write(base / "materials" / "index.html", materials())
         write(base / "sveden" / "index.html", sveden_index())
         for i, fn in enumerate(PAGES):
             write(base / "sveden" / SVEDEN_SLUGS[i] / "index.html", sveden_page(i, fn()))
-        count += 3 + len(PAGES)
-        print(f"  ✓ {code}: {3 + len(PAGES)} страниц")
+        count += 4 + len(PAGES)
+        print(f"  ✓ {code}: {4 + len(PAGES)} страниц")
     print(f"Готово: {count} страниц.")
