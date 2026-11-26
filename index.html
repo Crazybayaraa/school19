@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Главная — МБОУ «СОШ № 1»</title>
+  <meta name="description" content="Официальный сайт МБОУ «СОШ № 1», г. Примерск">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script>try{var s=JSON.parse(localStorage.getItem('a11y-settings'));if(s&&s.on)document.documentElement.classList.add('a11y')}catch(e){}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Перейти к содержимому</a>
+
+<div class="a11y-panel" role="region" aria-label="Настройки версии для слабовидящих">
+  <div class="container">
+    <fieldset><legend>Размер шрифта:</legend>
+      <button type="button" data-a11y-set="fs:1">А</button>
+      <button type="button" data-a11y-set="fs:2" style="font-size:1.2em">А</button>
+      <button type="button" data-a11y-set="fs:3" style="font-size:1.4em">А</button>
+    </fieldset>
+    <fieldset><legend>Цвет:</legend>
+      <button type="button" data-a11y-set="scheme:wb" aria-label="Чёрным по белому">Ц</button>
+      <button type="button" class="scheme-bw" data-a11y-set="scheme:bw" aria-label="Белым по чёрному">Ц</button>
+      <button type="button" class="scheme-blue" data-a11y-set="scheme:blue" aria-label="Тёмно-синим по голубому">Ц</button>
+      <button type="button" class="scheme-beige" data-a11y-set="scheme:beige" aria-label="Коричневым по бежевому">Ц</button>
+    </fieldset>
+    <fieldset><legend>Изображения:</legend>
+      <button type="button" data-a11y-set="noimg:false">Вкл</button>
+      <button type="button" data-a11y-set="noimg:true">Выкл</button>
+    </fieldset>
+    <fieldset><legend>Интервал:</legend>
+      <button type="button" data-a11y-set="ls:false">Обычный</button>
+      <button type="button" data-a11y-set="ls:true">Большой</button>
+    </fieldset>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="container">
+    <div class="topbar__info">
+      <span>📞 <a href="tel:+70000000000">+7 (000) 000-00-00</a></span>
+      <span>✉ <a href="mailto:school1@example.ru">school1@example.ru</a></span>
+      <span>🕘 Пн–Пт: 08:00–18:00, Сб: 08:00–14:00, Вс: выходной</span>
+    </div>
+    <button type="button" class="btn-a11y" aria-pressed="false"><span aria-hidden="true">👁</span><span> Версия для слабовидящих</span></button>
+  </div>
+</div>
+
+<header class="header">
+  <div class="container">
+    <a class="brand" href="index.html">
+      <span class="brand__logo" aria-hidden="true">№1</span>
+      <span class="brand__name">МБОУ «СОШ № 1»<small>г. Примерск</small></span>
+    </a>
+    <button class="nav-toggle" type="button" aria-controls="main-nav" aria-expanded="false">☰ Меню</button>
+    <nav class="nav" id="main-nav" aria-label="Основное меню">
+      <ul>
+        <li><a href="index.html" aria-current="page">Главная</a></li>
+        <li><a href="sveden/index.html">Сведения об ОО</a></li>
+        <li><a href="index.html#news">Новости</a></li>
+        <li><a href="index.html#parents">Родителям</a></li>
+        <li><a href="contacts.html">Контакты</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero">
+    <div class="container">
+      <div>
+        <span class="hero__eyebrow">Приём в 1-й класс на 2027/2028 учебный год — с 1 апреля</span>
+        <h1>МБОУ «СОШ № 1»</h1>
+        <p class="lead">Современная школа, где каждый ученик раскрывает свои способности. Начальное, основное и среднее общее образование в городе Примерск.</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="sveden/index.html">Сведения об образовательной организации</a>
+          <a class="btn btn--ghost" href="contacts.html">Контакты</a>
+        </div>
+      </div>
+      <div class="hero__card">
+        <div class="hero__stats">
+          <div class="stat"><b>825</b><span>обучающихся</span></div>
+          <div class="stat"><b>64</b><span>педагога</span></div>
+          <div class="stat"><b>50+</b><span>кружков и секций</span></div>
+          <div class="stat"><b>1975</b><span>год основания</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section__head">
+        <div><h2>Сведения об образовательной организации</h2><p>Обязательный раздел по Приказу Рособрнадзора № 1493</p></div>
+        <a class="btn btn--ghost" href="sveden/index.html">Все 14 подразделов →</a>
+      </div>
+      <div class="grid grid--4">
+        <a class="card" href="sveden/common/index.html"><span class="card__icon" aria-hidden="true">🏫</span><h3>Основные сведения</h3></a>
+        <a class="card" href="sveden/struct/index.html"><span class="card__icon" aria-hidden="true">🗂️</span><h3>Структура и органы управления образовательной организацией</h3></a>
+        <a class="card" href="sveden/document/index.html"><span class="card__icon" aria-hidden="true">📄</span><h3>Документы</h3></a>
+        <a class="card" href="sveden/education/index.html"><span class="card__icon" aria-hidden="true">🎓</span><h3>Образование</h3></a>
+        <a class="card" href="sveden/eduStandarts/index.html"><span class="card__icon" aria-hidden="true">📘</span><h3>Образовательные стандарты и требования</h3></a>
+        <a class="card" href="sveden/managers/index.html"><span class="card__icon" aria-hidden="true">👤</span><h3>Руководство</h3></a>
+        <a class="card" href="sveden/employees/index.html"><span class="card__icon" aria-hidden="true">👩‍🏫</span><h3>Педагогический состав</h3></a>
+        <a class="card" href="sveden/objects/index.html"><span class="card__icon" aria-hidden="true">🧪</span><h3>Материально-техническое обеспечение и оснащённость образовательного процесса. Доступная среда</h3></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--soft" id="news">
+    <div class="container">
+      <div class="section__head"><h2>Новости</h2></div>
+      <div class="grid grid--3">
+        <article class="card"><div class="news-img" role="img" aria-label="Иллюстрация к новости"></div><div class="card__date">20 ноября 2026</div><h3>Школьный этап всероссийской олимпиады завершён</h3><p>Подведены итоги: 46 учащихся вышли в муниципальный этап.</p></article>
+        <article class="card"><div class="news-img" role="img" aria-label="Иллюстрация к новости"></div><div class="card__date">14 ноября 2026</div><h3>День открытых дверей для будущих первоклассников</h3><p>Приглашаем родителей познакомиться с учителями и программами.</p></article>
+        <article class="card"><div class="news-img" role="img" aria-label="Иллюстрация к новости"></div><div class="card__date">05 ноября 2026</div><h3>Новая лаборатория «Точка роста»</h3><p>Открыт кабинет робототехники и цифровых лабораторий.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="parents">
+    <div class="container">
+      <div class="section__head"><h2>Родителям и ученикам</h2></div>
+      <div class="grid grid--4">
+        <a class="card" href="https://www.gosuslugi.ru/" rel="noopener"><span class="card__icon" aria-hidden="true">📝</span><h3>Запись в 1-й класс</h3><p>Подача заявления через Госуслуги</p></a>
+        <a class="card" href="https://myschool.edu.ru/" rel="noopener"><span class="card__icon" aria-hidden="true">📚</span><h3>Электронный дневник</h3><p>ФГИС «Моя школа»</p></a>
+        <a class="card" href="sveden/catering/index.html"><span class="card__icon" aria-hidden="true">🍎</span><h3>Меню питания</h3><p>Ежедневное меню столовой</p></a>
+        <a class="card" href="sveden/vacant/index.html"><span class="card__icon" aria-hidden="true">🪑</span><h3>Свободные места</h3><p>Вакантные места для приёма</p></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <!-- Замените этот блок на виджет Платформы обратной связи (ПОС) Госуслуг:
+           код выдаётся в личном кабинете организации на pos.gosuslugi.ru -->
+      <div class="pos-banner" id="pos-widget">
+        <div><h2>Не убедились в ответе? Напишите нам через Госуслуги</h2><p>Платформа обратной связи — обращения, жалобы и предложения</p></div>
+        <a class="btn" href="https://pos.gosuslugi.ru/" rel="noopener">Написать обращение</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <h3>МБОУ «СОШ № 1»</h3>
+        <p>Муниципальное бюджетное общеобразовательное учреждение «Средняя общеобразовательная школа № 1»</p>
+        <p>123456, Российская Федерация, Примерская область, г. Примерск, ул. Школьная, д. 1<br>Тел.: +7 (000) 000-00-00 · E-mail: <a href="mailto:school1@example.ru">school1@example.ru</a></p>
+      </div>
+      <div>
+        <h3>Разделы</h3>
+        <ul>
+          <li><a href="sveden/index.html">Сведения об образовательной организации</a></li>
+          <li><a href="sveden/document/index.html">Документы</a></li>
+          <li><a href="sveden/vacant/index.html">Вакантные места</a></li>
+          <li><a href="sveden/catering/index.html">Питание</a></li>
+          <li><a href="contacts.html">Контакты</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Полезные ссылки</h3>
+        <ul>
+          <li><a href="https://edu.gov.ru/" rel="noopener">Минпросвещения России</a></li>
+          <li><a href="https://obrnadzor.gov.ru/" rel="noopener">Рособрнадзор</a></li>
+          <li><a href="https://www.gosuslugi.ru/" rel="noopener">Госуслуги</a></li>
+          <li><a href="https://fgis.gosuslugi.ru/" rel="noopener">ФГИС «Моя школа»</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© МБОУ «СОШ № 1», 2026. Все права защищены.</span>
+      <span><a href="docs/privacy-policy.pdf">Политика обработки персональных данных</a></span>
+    </div>
+  </div>
+</footer>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
