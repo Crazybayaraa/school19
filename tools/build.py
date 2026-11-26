@@ -1,143 +1,289 @@
 # -*- coding: utf-8 -*-
 """
-Генератор статических страниц сайта школы.
+Генератор статических страниц сайта школы (RU / EN / MN).
 Запуск:  python tools/build.py
-Создаёт index.html, contacts.html и раздел /sveden/ (14 подразделов)
-по Приказу Рособрнадзора № 1493 от 04.08.2023.
 
-Данные школы меняйте в словаре SCHOOL ниже, содержимое подразделов —
-в функциях page_*(). После правки снова запустите скрипт.
+  /            — русская версия (основная; раздел /sveden/ по Приказу
+                 Рособрнадзора № 1493 от 04.08.2023, с микроразметкой itemprop)
+  /en/         — английская версия
+  /mn/         — монгольская версия
+
+Тексты задаются через L("рус", "eng", "монг"). Данные школы — в SCHOOL.
+После правки снова запустите скрипт.
 """
 from pathlib import Path
+import hashlib
+import json
+import re
 
 ROOT = Path(__file__).resolve().parent.parent
+def asset_ver(rel):
+    """Хэш файла для сброса кэша браузера после изменений."""
+    return hashlib.md5((ROOT / rel).read_bytes()).hexdigest()[:8]
 
-SCHOOL = {
-    "full": "Муниципальное бюджетное общеобразовательное учреждение «Средняя общеобразовательная школа № 1»",
-    "short": "МБОУ «СОШ № 1»",
-    "abbr": "1",
-    "city": "г. Примерск",
-    "address": "123456, Российская Федерация, Примерская область, г. Примерск, ул. Школьная, д. 1",
-    "phone": "+7 (000) 000-00-00",
-    "email": "school1@example.ru",
-    "hours": "Пн–Пт: 08:00–18:00, Сб: 08:00–14:00, Вс: выходной",
-    "regdate": "01.09.1975",
-    "director": "Иванова Мария Петровна",
+
+# Данные, перенесённые со старого сайта (http://erdenetschool.edu.mn, WordPress)
+OLD = json.loads((Path(__file__).resolve().parent / "oldsite.json").read_text(encoding="utf-8"))
+
+_TR = dict(zip("абвгдеёжзийклмнопрстуфхцчшщъыьэюяөү",
+               ["a", "b", "v", "g", "d", "e", "e", "zh", "z", "i", "y", "k", "l", "m", "n", "o", "p", "r", "s", "t",
+                "u", "f", "kh", "ts", "ch", "sh", "shch", "", "y", "", "e", "yu", "ya", "o", "u"]))
+
+
+def translit(name):
+    """Кириллица → латиница для английской версии (ФИО)."""
+    out = "".join(_TR.get(c.lower(), c) for c in name)
+    return " ".join(w[:1].upper() + w[1:] for w in out.split())
+
+
+def fio(name):
+    return L(name, translit(name), name)
+
+
+def phone_fmt(raw):
+    """+976(757)73851 → +976 7577-3851"""
+    d = re.sub(r"\D", "", raw)
+    return f"+{d[:3]} {d[3:7]}-{d[7:]}" if len(d) == 11 else raw
+
+
+POSTS = {
+    "учитель математики": ("Mathematics teacher", "Математикийн багш"),
+    "учитель английского языка": ("English teacher", "Англи хэлний багш"),
+    "учитель географии": ("Geography teacher", "Газарзүйн багш"),
+    "учитель истории": ("History teacher", "Түүхийн багш"),
+    "учитель истории и обществознания": ("History and social studies teacher", "Түүх, нийгмийн ухааны багш"),
+    "учитель монгольского языка": ("Mongolian language teacher", "Монгол хэлний багш"),
+    "учитель монгольской литературы и старописьменного монгольского языка": ("Mongolian literature and classical script teacher", "Монгол уран зохиол, монгол бичгийн багш"),
+    "учитель музыки": ("Music teacher", "Хөгжмийн багш"),
+    "учитель начальных классов": ("Primary school teacher", "Бага ангийн багш"),
+    "учитель русского языка и литературы": ("Russian language and literature teacher", "Орос хэл, уран зохиолын багш"),
+    "учитель технологии": ("Technology teacher", "Технологийн багш"),
+    "учитель физики": ("Physics teacher", "Физикийн багш"),
+    "учитель физической культуры": ("Physical education teacher", "Биеийн тамирын багш"),
+    "учитель химии": ("Chemistry teacher", "Химийн багш"),
+    "учитель ИЗО, черчения": ("Art and technical drawing teacher", "Дүрслэх урлаг, зураг зүйн багш"),
+    "Директор школы": ("Principal", "Захирал"),
+    "Ведущий менеджер": ("Lead manager", "Ахлах менежер"),
+    "Заместитель директора по учебно-воспитательной работе": ("Deputy Principal for Academic Affairs", "Сургалт, хүмүүжил хариуцсан орлогч захирал"),
 }
+LEVELS = {"высшее": ("Higher", "Дээд"), "среднее профессиональное": ("Vocational", "Тусгай дунд"),
+          "среднее специальное": ("Vocational", "Тусгай дунд")}
+CATEGORIES = {"высшая квалификационная категория": ("Highest", "Дээд ангилал"),
+              "первая квалификационная категория": ("First", "Нэгдүгээр ангилал")}
 
-# (slug, название подраздела) — порядок и адреса строго по Приказу № 1493
-SVEDEN = [
-    ("common", "Основные сведения"),
-    ("struct", "Структура и органы управления образовательной организацией"),
-    ("document", "Документы"),
-    ("education", "Образование"),
-    ("eduStandarts", "Образовательные стандарты и требования"),
-    ("managers", "Руководство"),
-    ("employees", "Педагогический состав"),
-    ("objects", "Материально-техническое обеспечение и оснащённость образовательного процесса. Доступная среда"),
-    ("paid_edu", "Платные образовательные услуги"),
-    ("budget", "Финансово-хозяйственная деятельность"),
-    ("vacant", "Вакантные места для приёма (перевода) обучающихся"),
-    ("grants", "Стипендии и меры поддержки обучающихся"),
-    ("inter", "Международное сотрудничество"),
-    ("catering", "Организация питания в образовательной организации"),
-]
+
+def tr(dic, ru):
+    if ru in dic:
+        en, mn = dic[ru]
+        return L(ru[:1].upper() + ru[1:], en, mn)
+    return ru or "—"
+
+
+SITE_URL = "http://erdenetschool.edu.mn"  # замените на адрес сайта
+
+LANGS = [("ru", "RU", "Русский"), ("en", "EN", "English"), ("mn", "MN", "Монгол")]
+CUR = "ru"  # текущий язык при генерации
+
+
+def L(ru, en, mn):
+    return {"ru": ru, "en": en, "mn": mn}[CUR]
+
+
+def ip(name):
+    """Микроразметка itemprop — только в русской версии (её проверяет Рособрнадзор)."""
+    return f' itemprop="{name}"' if name and CUR == "ru" else ""
+
+
+def school():
+    return {
+        "full": L("Средняя общеобразовательная школа № 19 ПГС «Предприятие Эрдэнэт»",
+                  "Secondary School No. 19 of Erdenet Mining Corporation",
+                  "«Эрдэнэт үйлдвэр» ТӨҮГ-ын 19-р дунд сургууль"),
+        "short_full": L("СОШ № 19 ПГС «Предприятие Эрдэнэт»", "School No. 19, Erdenet Mining Corporation", "«Эрдэнэт үйлдвэр» ТӨҮГ-ын 19-р сургууль"),
+        "short": L("СОШ № 19", "School No. 19", "19-р дунд сургууль"),
+        "city": L("г. Эрдэнэт", "Erdenet", "Эрдэнэт хот"),
+        "address": L("61027, Монголия, Орхон аймак, г. Эрдэнэт, сомон Баян-Ундэр",
+                     "Bayan-Undur soum, Erdenet, Orkhon Province, 61027, Mongolia",
+                     "61027, Монгол Улс, Орхон аймаг, Эрдэнэт хот, Баян-Өндөр сум"),
+        "phone": "+976 7577-3858",
+        "email": "school19@erdenetmc.mn",
+        "hours_short": "8:00–18:30",
+        "hours": L("Начало занятий 1-й смены — 8:00, 2-й смены — 13:05; окончание работы — 18:30. Приёмная директора: 8:00–17:00",
+                   "1st shift starts at 8:00, 2nd shift at 13:05; school closes at 18:30. Principal's office: 8:00–17:00",
+                   "1-р ээлж 8:00, 2-р ээлж 13:05-д эхэлнэ; 18:30-д хаадаг. Захирлын өрөө: 8:00–17:00"),
+        "regdate": L("1974 г.", "1974", "1974 он"),
+        "languages": L("Русский, монгольский", "Russian, Mongolian", "Орос, монгол"),
+        "director": fio("Степанова Светлана Иннокентьевна"),
+    }
+
+
+SVEDEN_SLUGS = ["common", "struct", "document", "education", "eduStandarts", "managers", "employees",
+                "objects", "paid_edu", "budget", "vacant", "grants", "inter", "catering"]
+
+
+def sveden_names():
+    return [
+        L("Основные сведения", "Basic Information", "Үндсэн мэдээлэл"),
+        L("Структура и органы управления образовательной организацией", "Structure and Governing Bodies", "Бүтэц, удирдлагын байгууллага"),
+        L("Документы", "Documents", "Баримт бичиг"),
+        L("Образование", "Education", "Боловсрол"),
+        L("Образовательные стандарты и требования", "Educational Standards and Requirements", "Боловсролын стандарт, шаардлага"),
+        L("Руководство", "Management", "Удирдлага"),
+        L("Педагогический состав", "Teaching Staff", "Багшийн бүрэлдэхүүн"),
+        L("Материально-техническое обеспечение и оснащённость образовательного процесса. Доступная среда",
+          "Facilities and Equipment. Accessible Environment",
+          "Материаллаг-техникийн хангамж, тоноглол. Хүртээмжтэй орчин"),
+        L("Платные образовательные услуги", "Paid Educational Services", "Төлбөртэй боловсролын үйлчилгээ"),
+        L("Финансово-хозяйственная деятельность", "Financial and Economic Activities", "Санхүү, аж ахуйн үйл ажиллагаа"),
+        L("Вакантные места для приёма (перевода) обучающихся", "Vacancies for Admission (Transfer)", "Элсэлт, шилжилтийн сул орон тоо"),
+        L("Стипендии и меры поддержки обучающихся", "Scholarships and Student Support", "Тэтгэлэг, суралцагчдыг дэмжих арга хэмжээ"),
+        L("Международное сотрудничество", "International Cooperation", "Олон улсын хамтын ажиллагаа"),
+        L("Организация питания в образовательной организации", "School Meals", "Хоол хүнсний зохион байгуулалт"),
+    ]
+
 
 ICONS = ["🏫", "🗂️", "📄", "🎓", "📘", "👤", "👩‍🏫", "🧪", "💳", "📊", "🪑", "🎖️", "🌍", "🍎"]
 
 
-# ------------------------------------------------------------------ layout
-def layout(title, body, depth=0, current="", crumbs=None):
-    p = "../" * depth
+# ------------------------------------------------------------------ helpers
+def lang_prefix(code):
+    return "" if code == "ru" else f"{code}/"
+
+
+def layout(title, body, rel, current="", crumbs=None):
+    """rel — путь страницы относительно корня языка, напр. 'sveden/common/index.html'."""
+    S = school()
+    depth = rel.count("/") + (0 if CUR == "ru" else 1)
+    top = "../" * depth          # путь к корню сайта (assets, docs)
+    p = top + lang_prefix(CUR)   # путь к корню текущего языка
+
     nav_items = [
-        ("index.html", "Главная", "home"),
-        ("sveden/index.html", "Сведения об ОО", "sveden"),
-        ("index.html#news", "Новости", "news"),
-        ("index.html#parents", "Родителям", "parents"),
-        ("contacts.html", "Контакты", "contacts"),
+        ("index.html", L("Главная", "Home", "Нүүр"), "home"),
+        ("sveden/index.html", L("Сведения об ОО", "About the School", "Сургуулийн тухай"), "sveden"),
+        ("index.html#news", L("Новости", "News", "Мэдээ"), "news"),
+        ("index.html#parents", L("Родителям", "For Parents", "Эцэг эхчүүдэд"), "parents"),
+        ("contacts.html", L("Контакты", "Contacts", "Холбоо барих"), "contacts"),
     ]
-    nav = "\n".join(
-        f'        <li><a href="{p}{href}"{" aria-current=\"page\"" if key == current else ""}>{label}</a></li>'
-        for href, label, key in nav_items
+    # Выпадающие подменю: ключ пункта -> [(ссылка, подпись)]
+    subs = {
+        "sveden": [(f"{p}sveden/{s}/index.html", n) for s, n in zip(SVEDEN_SLUGS, sveden_names())],
+        "parents": [
+            ("https://www.gosuslugi.ru/", L("Запись в 1-й класс", "Grade 1 enrolment", "1-р ангид бүртгүүлэх")),
+            ("https://myschool.edu.ru/", L("Электронный дневник", "Electronic diary", "Цахим өдрийн тэмдэглэл")),
+            (f"{p}sveden/catering/index.html", L("Меню питания", "School menu", "Хоолны цэс")),
+            (f"{p}sveden/vacant/index.html", L("Свободные места", "Vacant places", "Сул орон тоо")),
+            (f"{p}sveden/paid_edu/index.html", L("Платные услуги", "Paid services", "Төлбөртэй үйлчилгээ")),
+            (f"{p}sveden/document/index.html", L("Документы", "Documents", "Баримт бичиг")),
+        ],
+    }
+
+    def nav_li(href, label, key):
+        cur = ' aria-current="page"' if key == current else ""
+        if key not in subs:
+            return f'        <li><a href="{p}{href}"{cur}>{label}</a></li>'
+        wide = " submenu--wide" if len(subs[key]) > 8 else ""
+        items = "".join(
+            f'<li><a href="{h}"' + (' rel="noopener"' if h.startswith("http") else "") + f'>{n}</a></li>'
+            for h, n in subs[key]
+        )
+        return (f'        <li class="has-sub"><a href="{p}{href}"{cur} aria-haspopup="true">{label}</a>'
+                f'<ul class="submenu{wide}">{items}</ul></li>')
+
+    nav = "\n".join(nav_li(h, l, k) for h, l, k in nav_items)
+    langs = "".join(
+        f'<a href="{top}{lang_prefix(c)}{rel}" hreflang="{c}" lang="{c}" title="{name}"'
+        f'{" aria-current=\"true\"" if c == CUR else ""}>{short}</a>'
+        for c, short, name in LANGS
     )
-    crumbs_html = ""
-    if crumbs:
+    alternates = "\n".join(
+        f'  <link rel="alternate" hreflang="{c}" href="{SITE_URL}/{lang_prefix(c)}{rel.replace("index.html", "")}">'
+        for c, _, _ in LANGS
+    )
+
+    head_block = ""
+    if crumbs is not None:
         items = "".join(
             f'<li><a href="{p}{h}">{t}</a></li>' if h else f'<li aria-current="page">{t}</li>'
             for t, h in crumbs
         )
-        crumbs_html = f'<nav class="breadcrumbs" aria-label="Хлебные крошки"><ol>{items}</ol></nav>'
-
-    head_block = ""
-    if crumbs is not None:
         head_block = f"""
   <section class="page-head">
     <div class="container">
-      {crumbs_html}
+      <nav class="breadcrumbs" aria-label="{L("Навигационная цепочка", "Breadcrumbs", "Байршил")}"><ol>{items}</ol></nav>
       <h1>{title}</h1>
     </div>
   </section>"""
 
+    a11y_on = L("Версия для слабовидящих", "Low vision version", "Хараа муу хүмүүст")
+    a11y_off = L("Обычная версия", "Standard version", "Энгийн хувилбар")
+    tel = S["phone"].replace(" ", "").replace("(", "").replace(")", "").replace("-", "")
+
     return f"""<!doctype html>
-<html lang="ru">
+<html lang="{CUR}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{title} — {SCHOOL["short"]}</title>
-  <meta name="description" content="Официальный сайт {SCHOOL["short"]}, {SCHOOL["city"]}">
-  <link rel="stylesheet" href="{p}assets/css/style.css">
+  <title>{title} — {S["short"]}</title>
+  <meta name="description" content="{L("Официальный сайт", "Official website of", "Албан ёсны вэбсайт —")} {S["short"]}, {S["city"]}">
+{alternates}
+  <link rel="stylesheet" href="{top}assets/css/style.css?v={asset_ver("assets/css/style.css")}">
   <script>try{{var s=JSON.parse(localStorage.getItem('a11y-settings'));if(s&&s.on)document.documentElement.classList.add('a11y')}}catch(e){{}}</script>
 </head>
 <body>
-<a class="skip-link" href="#main">Перейти к содержимому</a>
+<a class="skip-link" href="#main">{L("Перейти к содержимому", "Skip to content", "Агуулга руу шилжих")}</a>
 
-<div class="a11y-panel" role="region" aria-label="Настройки версии для слабовидящих">
+<div class="a11y-panel" role="region" aria-label="{a11y_on}">
   <div class="container">
-    <fieldset><legend>Размер шрифта:</legend>
-      <button type="button" data-a11y-set="fs:1">А</button>
-      <button type="button" data-a11y-set="fs:2" style="font-size:1.2em">А</button>
-      <button type="button" data-a11y-set="fs:3" style="font-size:1.4em">А</button>
+    <fieldset><legend>{L("Размер шрифта:", "Font size:", "Үсгийн хэмжээ:")}</legend>
+      <button type="button" data-a11y-set="fs:1">A</button>
+      <button type="button" data-a11y-set="fs:2" style="font-size:1.2em">A</button>
+      <button type="button" data-a11y-set="fs:3" style="font-size:1.4em">A</button>
     </fieldset>
-    <fieldset><legend>Цвет:</legend>
-      <button type="button" data-a11y-set="scheme:wb" aria-label="Чёрным по белому">Ц</button>
-      <button type="button" class="scheme-bw" data-a11y-set="scheme:bw" aria-label="Белым по чёрному">Ц</button>
-      <button type="button" class="scheme-blue" data-a11y-set="scheme:blue" aria-label="Тёмно-синим по голубому">Ц</button>
-      <button type="button" class="scheme-beige" data-a11y-set="scheme:beige" aria-label="Коричневым по бежевому">Ц</button>
+    <fieldset><legend>{L("Цвет:", "Colors:", "Өнгө:")}</legend>
+      <button type="button" data-a11y-set="scheme:wb" aria-label="{L("Чёрным по белому", "Black on white", "Цагаан дээр хар")}">Ц</button>
+      <button type="button" class="scheme-bw" data-a11y-set="scheme:bw" aria-label="{L("Белым по чёрному", "White on black", "Хар дээр цагаан")}">Ц</button>
+      <button type="button" class="scheme-blue" data-a11y-set="scheme:blue" aria-label="{L("Тёмно-синим по голубому", "Dark blue on light blue", "Цайвар цэнхэр дээр хар хөх")}">Ц</button>
+      <button type="button" class="scheme-beige" data-a11y-set="scheme:beige" aria-label="{L("Коричневым по бежевому", "Brown on beige", "Шаргал дээр бор")}">Ц</button>
     </fieldset>
-    <fieldset><legend>Изображения:</legend>
-      <button type="button" data-a11y-set="noimg:false">Вкл</button>
-      <button type="button" data-a11y-set="noimg:true">Выкл</button>
+    <fieldset><legend>{L("Изображения:", "Images:", "Зураг:")}</legend>
+      <button type="button" data-a11y-set="noimg:false">{L("Вкл", "On", "Асаах")}</button>
+      <button type="button" data-a11y-set="noimg:true">{L("Выкл", "Off", "Унтраах")}</button>
     </fieldset>
-    <fieldset><legend>Интервал:</legend>
-      <button type="button" data-a11y-set="ls:false">Обычный</button>
-      <button type="button" data-a11y-set="ls:true">Большой</button>
+    <fieldset><legend>{L("Интервал:", "Spacing:", "Зай:")}</legend>
+      <button type="button" data-a11y-set="ls:false">{L("Обычный", "Normal", "Энгийн")}</button>
+      <button type="button" data-a11y-set="ls:true">{L("Большой", "Large", "Том")}</button>
     </fieldset>
+    <button type="button" class="btn-a11y a11y-panel__reset" aria-pressed="true" data-label-on="{a11y_on}" data-label-off="{a11y_off}"><span class="ico" aria-hidden="true">👁</span><span> {a11y_off}</span></button>
   </div>
 </div>
 
 <div class="topbar">
   <div class="container">
     <div class="topbar__info">
-      <span>📞 <a href="tel:{SCHOOL["phone"].replace(" ", "").replace("(", "").replace(")", "").replace("-", "")}">{SCHOOL["phone"]}</a></span>
-      <span>✉ <a href="mailto:{SCHOOL["email"]}">{SCHOOL["email"]}</a></span>
-      <span>🕘 {SCHOOL["hours"]}</span>
+      <span><span class="ico" aria-hidden="true">📞</span> <a href="tel:{tel}">{S["phone"]}</a></span>
+      <span><span class="ico" aria-hidden="true">✉</span> <a href="mailto:{S["email"]}">{S["email"]}</a></span>
+      <span><span class="ico" aria-hidden="true">🕘</span> {S["hours_short"]}</span>
     </div>
-    <button type="button" class="btn-a11y" aria-pressed="false"><span aria-hidden="true">👁</span><span> Версия для слабовидящих</span></button>
+    <div class="topbar__tools">
+      <nav class="lang-switch" aria-label="{L("Язык", "Language", "Хэл")}">{langs}</nav>
+      <button type="button" class="btn-a11y" aria-pressed="false" data-label-on="{a11y_on}" data-label-off="{a11y_off}"><span class="ico" aria-hidden="true">👁</span><span> {a11y_on}</span></button>
+    </div>
   </div>
 </div>
 
 <header class="header">
   <div class="container">
     <a class="brand" href="{p}index.html">
-      <span class="brand__logo" aria-hidden="true">№{SCHOOL["abbr"]}</span>
-      <span class="brand__name">{SCHOOL["short"]}<small>{SCHOOL["city"]}</small></span>
+      <span class="brand__logo" aria-hidden="true">№19</span>
+      <span class="brand__name">{S["short"]}<small>{S["city"]}</small></span>
     </a>
-    <button class="nav-toggle" type="button" aria-controls="main-nav" aria-expanded="false">☰ Меню</button>
-    <nav class="nav" id="main-nav" aria-label="Основное меню">
+    <button class="nav-toggle" type="button" aria-controls="main-nav" aria-expanded="false">☰ {L("Меню", "Menu", "Цэс")}</button>
+    <nav class="nav" id="main-nav" aria-label="{L("Основное меню", "Main menu", "Үндсэн цэс")}">
       <ul>
 {nav}
       </ul>
     </nav>
+    <a class="btn btn--primary btn--sm header__cta" href="https://www.gosuslugi.ru/" rel="noopener">{L("Подать заявление", "Apply", "Өргөдөл гаргах")}</a>
   </div>
 </header>
 
@@ -147,343 +293,433 @@ def layout(title, body, depth=0, current="", crumbs=None):
 
 <footer class="footer">
   <div class="container">
+   <div class="footer__panel">
     <div class="footer__grid">
       <div>
-        <h3>{SCHOOL["short"]}</h3>
-        <p>{SCHOOL["full"]}</p>
-        <p>{SCHOOL["address"]}<br>Тел.: {SCHOOL["phone"]} · E-mail: <a href="mailto:{SCHOOL["email"]}">{SCHOOL["email"]}</a></p>
+        <a class="brand" href="{p}index.html">
+          <span class="brand__logo" aria-hidden="true">№19</span>
+          <span class="brand__name">{S["short"]}<small>{S["city"]}</small></span>
+        </a>
+        <p>{S["full"]}</p>
       </div>
       <div>
-        <h3>Разделы</h3>
+        <h3>{L("Контакты", "Contacts", "Холбоо барих")}</h3>
         <ul>
-          <li><a href="{p}sveden/index.html">Сведения об образовательной организации</a></li>
-          <li><a href="{p}sveden/document/index.html">Документы</a></li>
-          <li><a href="{p}sveden/vacant/index.html">Вакантные места</a></li>
-          <li><a href="{p}sveden/catering/index.html">Питание</a></li>
-          <li><a href="{p}contacts.html">Контакты</a></li>
+          <li>{S["address"]}</li>
+          <li><a href="tel:{tel}">{S["phone"]}</a></li>
+          <li><a href="mailto:{S["email"]}">{S["email"]}</a></li>
         </ul>
       </div>
       <div>
-        <h3>Полезные ссылки</h3>
+        <h3>{L("Разделы", "Sections", "Хэсгүүд")}</h3>
         <ul>
-          <li><a href="https://edu.gov.ru/" rel="noopener">Минпросвещения России</a></li>
-          <li><a href="https://obrnadzor.gov.ru/" rel="noopener">Рособрнадзор</a></li>
-          <li><a href="https://www.gosuslugi.ru/" rel="noopener">Госуслуги</a></li>
-          <li><a href="https://fgis.gosuslugi.ru/" rel="noopener">ФГИС «Моя школа»</a></li>
+          <li><a href="{p}sveden/index.html">{L("Сведения об образовательной организации", "About the School", "Сургуулийн тухай мэдээлэл")}</a></li>
+          <li><a href="{p}sveden/document/index.html">{sveden_names()[2]}</a></li>
+          <li><a href="{p}sveden/vacant/index.html">{L("Вакантные места", "Vacancies", "Сул орон тоо")}</a></li>
+          <li><a href="{p}sveden/catering/index.html">{L("Питание", "School meals", "Хоол хүнс")}</a></li>
+          <li><a href="{p}contacts.html">{L("Контакты", "Contacts", "Холбоо барих")}</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>{L("Полезные ссылки", "Useful links", "Хэрэгцээт холбоос")}</h3>
+        <ul>
+          <li><a href="https://edu.gov.ru/" rel="noopener">{L("Минпросвещения России", "Ministry of Education of Russia", "ОХУ-ын Гэгээрлийн яам")}</a></li>
+          <li><a href="https://obrnadzor.gov.ru/" rel="noopener">{L("Рособрнадзор", "Rosobrnadzor", "Рособрнадзор")}</a></li>
+          <li><a href="https://www.gosuslugi.ru/" rel="noopener">{L("Госуслуги", "Gosuslugi (public services)", "Госуслуги (төрийн үйлчилгээ)")}</a></li>
+          <li><a href="https://myschool.edu.ru/" rel="noopener">{L("ФГИС «Моя школа»", "“My School” platform", "«Моя школа» платформ")}</a></li>
         </ul>
       </div>
     </div>
     <div class="footer__bottom">
-      <span>© {SCHOOL["short"]}, 2026. Все права защищены.</span>
-      <span><a href="{p}docs/privacy-policy.pdf">Политика обработки персональных данных</a></span>
+      <span>© {S["short"]}, 2026. {L("Все права защищены.", "All rights reserved.", "Бүх эрх хуулиар хамгаалагдсан.")}</span>
+      <span><a href="{top}docs/privacy-policy.pdf">{L("Политика обработки персональных данных", "Personal data policy", "Хувийн мэдээлэл боловсруулах бодлого")}</a></span>
     </div>
+   </div>
   </div>
 </footer>
-<script src="{p}assets/js/main.js"></script>
+<script src="{top}assets/js/main.js?v={asset_ver("assets/js/main.js")}"></script>
 </body>
 </html>
 """
 
 
 def sveden_page(idx, body):
-    slug, name = SVEDEN[idx]
+    slug, names = SVEDEN_SLUGS[idx], sveden_names()
+    name = names[idx]
     side = "\n".join(
         f'        <li><a href="../{s}/index.html"{" aria-current=\"page\"" if s == slug else ""}>{n}</a></li>'
-        for s, n in SVEDEN
+        for s, n in zip(SVEDEN_SLUGS, names)
     )
     inner = f"""
   <div class="container layout">
     <aside>
-      <nav class="sidenav" aria-label="Подразделы">
-        <div class="sidenav__title">Сведения об ОО</div>
+      <nav class="sidenav" aria-label="{L("Подразделы", "Subsections", "Дэд хэсгүүд")}">
+        <div class="sidenav__title">{L("Сведения об ОО", "About the School", "Сургуулийн тухай")}</div>
         <ol>
 {side}
         </ol>
       </nav>
     </aside>
     <article class="content">
+{note(slug)}
 {body}
     </article>
   </div>"""
-    return layout(
-        name, inner, depth=2, current="sveden",
-        crumbs=[("Главная", "index.html"), ("Сведения об образовательной организации", "sveden/index.html"), (name, None)],
+    return layout(name, inner, f"sveden/{slug}/index.html", current="sveden",
+                  crumbs=[(L("Главная", "Home", "Нүүр"), "index.html"),
+                          (L("Сведения об образовательной организации", "About the School", "Сургуулийн тухай мэдээлэл"), "sveden/index.html"),
+                          (name, None)])
+
+
+# Подразделы, уже заполненные реальными данными со старого сайта
+REAL_DATA = {"common", "struct", "document", "eduStandarts", "managers", "employees"}
+
+
+def note(slug=""):
+    if CUR == "ru" and slug in REAL_DATA:
+        return ""
+    return L(
+        '<p class="note">Шаблон: замените примерные данные на сведения вашей организации. Атрибуты <code>itemprop</code> не удаляйте — по ним Рособрнадзор проводит автоматический мониторинг сайта.</p>',
+        '<p class="note">This is a translation for information purposes. The official version of this information is the <a href="../../../sveden/index.html">Russian version</a>. Documents are provided in Russian.</p>',
+        '<p class="note">Энэ нь мэдээллийн зорилготой орчуулга юм. Албан ёсны хувилбар нь <a href="../../../sveden/index.html">орос хэл дээрх хувилбар</a>. Баримт бичгүүд орос хэл дээр байна.</p>',
     )
 
 
 def kv(rows):
     """rows: [(label, value, itemprop|None)]"""
-    tr = "\n".join(
-        f'        <tr><th scope="row">{l}</th><td{f" itemprop=\"{ip}\"" if ip else ""}>{v}</td></tr>'
-        for l, v, ip in rows
-    )
+    tr = "\n".join(f'        <tr><th scope="row">{l}</th><td{ip(p)}>{v}</td></tr>' for l, v, p in rows)
     return f'<div class="table-wrap"><table class="kv"><tbody>\n{tr}\n      </tbody></table></div>'
 
 
 def table(head, rows, row_prop=None):
     th = "".join(f"<th>{h[0]}</th>" for h in head)
-    body = []
-    for r in rows:
-        tds = "".join(
-            f'<td{f" itemprop=\"{h[1]}\"" if h[1] else ""}>{v}</td>' for h, v in zip(head, r)
-        )
-        body.append(f'<tr{f" itemprop=\"{row_prop}\"" if row_prop else ""}>{tds}</tr>')
-    return f'<div class="table-wrap"><table><thead><tr>{th}</tr></thead><tbody>{"".join(body)}</tbody></table></div>'
+    body = "".join(
+        f'<tr{ip(row_prop)}>' + "".join(f"<td{ip(h[1])}>{v}</td>" for h, v in zip(head, r)) + "</tr>"
+        for r in rows
+    )
+    return f'<div class="table-wrap"><table><thead><tr>{th}</tr></thead><tbody>{body}</tbody></table></div>'
 
 
 def docs(items):
-    """items: [(title, file, itemprop|None)] — документы с ЭП"""
+    """items: [(title, file, itemprop|None)] — путь к docs/ от страницы подраздела"""
+    up = "../../" if CUR == "ru" else "../../../"
+    sig = L("✓ подписан ЭП", "✓ e-signed", "✓ цахим гарын үсэгтэй")
     li = "\n".join(
-        f'        <li><a href="../../docs/{f}"{f" itemprop=\"{ip}\"" if ip else ""}><span class="ext">PDF</span>{t}<span class="sig">✓ подписан ЭП</span></a></li>'
-        for t, f, ip in items
+        f'        <li><a href="{up}docs/{f}"{ip(p)}><span class="ext">PDF</span>{t}<span class="sig">{sig}</span></a></li>'
+        for t, f, p in items
     )
     return f'<ul class="doc-list">\n{li}\n      </ul>'
 
 
-NOTE = '<p class="note">Шаблон: замените примерные данные на сведения вашей организации. Атрибуты <code>itemprop</code> не удаляйте — по ним Рособрнадзор проводит автоматический мониторинг сайта.</p>'
+_MAP_FILE = Path(__file__).resolve().parent / "docs_map.json"
+DOCS_MAP = json.loads(_MAP_FILE.read_text(encoding="utf-8")) if _MAP_FILE.exists() else {}  # URL → docs/… (fetch_docs.py)
+
+
+def ext_docs(items, prop=None):
+    """items: [(title, url)]. Если файл скачан в docs/ (tools/fetch_docs.py) — ссылка на него
+    и встроенный просмотр PDF; иначе — внешняя ссылка на старое хранилище."""
+    up = "../../" if CUR == "ru" else "../../../"
+    view = L("Просмотр", "Preview", "Харах")
+    rows = []
+    for t, u in items:
+        local = DOCS_MAP.get(u)
+        if DOCS_MAP and not local and "cloud.mail.ru" in u:
+            # ссылка в облаке удалена (404 при переносе) — показываем без ссылки
+            gone = L("файл недоступен", "file unavailable", "файл байхгүй")
+            rows.append(f'        <li><span class="doc-missing"><span class="ext">—</span>{t} <small>({gone})</small></span></li>')
+            continue
+        href = up + local if local else u
+        ext = Path(local or u).suffix.lower()
+        kind = {".pdf": "PDF", ".doc": "DOC", ".docx": "DOC"}.get(ext, "URL")
+        a = f'<a href="{href}"{ip(prop)} rel="noopener" target="_blank"><span class="ext">{kind}</span>{t}</a>'
+        if local and kind == "PDF":
+            a += (f'<details class="doc-preview"><summary>{view}</summary>'
+                  f'<iframe src="{href}#view=FitH" loading="lazy" title="{t}"></iframe></details>')
+        rows.append(f"        <li>{a}</li>")
+    return '<ul class="doc-list">\n' + "\n".join(rows) + "\n      </ul>"
+
+
+def old_group(section, title):
+    return next((g[1] for g in OLD[section] if g[0] == title), [])
+
+
+def h2(ru, en, mn):
+    return f"<h2>{L(ru, en, mn)}</h2>"
 
 
 # ------------------------------------------------------------------ sveden pages
 def page_common():
-    return NOTE + f"""
-      <h2>Общая информация</h2>
+    S = school()
+    return f"""
+      {h2("Общая информация", "General information", "Ерөнхий мэдээлэл")}
       {kv([
-        ("Полное наименование", SCHOOL["full"], "fullName"),
-        ("Сокращённое наименование", SCHOOL["short"], "shortName"),
-        ("Дата создания", SCHOOL["regdate"], "regDate"),
-        ("Место нахождения (адрес)", SCHOOL["address"], "address"),
-        ("Режим и график работы", SCHOOL["hours"], "workTime"),
-        ("Контактный телефон", SCHOOL["phone"], "telephone"),
-        ("Адрес электронной почты", f'<a href="mailto:{SCHOOL["email"]}">{SCHOOL["email"]}</a>', "email"),
-        ("Места осуществления образовательной деятельности", SCHOOL["address"], "addressPlaceSet"),
-        ("Филиалы", "Филиалов нет", "filInfo"),
-        ("Представительства", "Представительств нет", "repInfo"),
+        (L("Полное наименование", "Full name", "Бүтэн нэр"), S["full"], "fullName"),
+        (L("Сокращённое наименование", "Short name", "Товч нэр"), S["short_full"], "shortName"),
+        (L("Дата создания", "Date of foundation", "Байгуулагдсан огноо"), S["regdate"], "regDate"),
+        (L("Место нахождения (адрес)", "Address", "Хаяг"), S["address"], "address"),
+        (L("Режим и график работы", "Working hours", "Ажлын цаг"), S["hours"], "workTime"),
+        (L("Контактный телефон", "Phone", "Утас"), S["phone"], "telephone"),
+        (L("Адрес электронной почты", "E-mail", "И-мэйл"), f'<a href="mailto:{S["email"]}">{S["email"]}</a>', "email"),
+        (L("Места осуществления образовательной деятельности", "Places of educational activity", "Сургалт явуулдаг байршил"), S["address"], "addressPlaceSet"),
+        (L("Языки образования", "Languages of instruction", "Сургалтын хэл"), S["languages"], "language"),
+        (L("Места проведения ГИА", "State final exam venue", "Улсын төгсөлтийн шалгалт авах газар"), S["address"], None),
+        (L("Филиалы", "Branches", "Салбар"), L("Филиалов нет", "None", "Байхгүй"), "filInfo"),
+        (L("Представительства", "Representative offices", "Төлөөлөгчийн газар"), L("Представительств нет", "None", "Байхгүй"), "repInfo"),
       ])}
-      <h2>Учредитель</h2>
-      <div itemprop="uchredLaw">
+      {h2("Учредитель", "Founder", "Үүсгэн байгуулагч")}
+      <div{ip("uchredLaw")}>
       {kv([
-        ("Наименование учредителя", "Администрация городского округа «Город Примерск»", "nameUchred"),
-        ("Адрес", "123456, г. Примерск, пл. Ленина, д. 1", "addressUchred"),
-        ("Телефон", "+7 (000) 000-00-01", "telUchred"),
-        ("E-mail", "adm@example.ru", "mailUchred"),
-        ("Сайт", '<a href="https://example.ru">example.ru</a>', "websiteUchred"),
+        (L("Наименование учредителя", "Founder", "Үүсгэн байгуулагчийн нэр"),
+         L("ПГС «Предприятие Эрдэнэт»", "Erdenet Mining Corporation (state-owned)", "«Эрдэнэт үйлдвэр» ТӨҮГ"), "nameUchred"),
+        (L("Сайт", "Website", "Вэбсайт"), '<a href="https://www.erdenetmc.mn" rel="noopener">www.erdenetmc.mn</a>', "websiteUchred"),
       ])}
       </div>
-      <h2>Лицензия и аккредитация</h2>
-      {kv([
-        ("Лицензия на образовательную деятельность", "№ Л035-00000-00/00000000 от 01.01.2016 (выписка из реестра лицензий)", "licenseDocLink"),
-        ("Государственная аккредитация", "№ А007-00000-00/00000000 от 01.01.2019", "accreditationDocLink"),
-      ])}
+      {h2("Лицензия", "License", "Тусгай зөвшөөрөл")}
+      {ext_docs([(L("Лицензия на образовательную деятельность", "Educational license", "Боловсролын үйл ажиллагааны тусгай зөвшөөрөл"), u)
+                 for t, u in old_group("documents", "Правоустанавливающие документы") if t == "Лицензия"], "licenseDocLink")}
 """
 
 
 def page_struct():
-    rows = [
-        ("Администрация", "Иванова Мария Петровна", "Директор", SCHOOL["address"], SCHOOL["email"], "Положение"),
-        ("Учебная часть", "Петрова Анна Сергеевна", "Заместитель директора по УВР", SCHOOL["address"], "uvr@example.ru", "Положение"),
-        ("Библиотека", "Сидорова Ольга Ивановна", "Заведующий библиотекой", SCHOOL["address"], "lib@example.ru", "Положение"),
-    ]
-    rows = [r[:5] + (f'<a href="../../docs/polozhenie.pdf">{r[5]}</a>',) for r in rows]
+    S = school()
+    up = "../../" if CUR == "ru" else "../../../"
+    reg = L("Положение", "Regulations", "Журам")
+    unit = {"Директор школы": L("Администрация", "Administration", "Захиргаа"),
+            "Ведущий менеджер": L("Администрация", "Administration", "Захиргаа"),
+            "Заместитель директора по учебно-воспитательной работе": L("Учебная часть", "Academic office", "Сургалтын алба")}
+    pol = next((u for t, u in old_group("documents", "Правоустанавливающие документы") if t.startswith("Положение о деятельности")), "#")
+    pol = up + DOCS_MAP[pol] if pol in DOCS_MAP else pol
+    rows = [(unit[m["post"]], fio(m["fio"]), tr(POSTS, m["post"]), S["address"],
+             f'<a href="mailto:{m["email"]}">{m["email"]}</a>', f'<a href="{pol}" rel="noopener" target="_blank">{reg}</a>')
+            for m in OLD["managers"]]
     gov = [
-        ("Общее собрание работников", "Положение об общем собрании"),
-        ("Педагогический совет", "Положение о педагогическом совете"),
-        ("Управляющий совет", "Положение об управляющем совете"),
-        ("Совет обучающихся", "Положение о совете обучающихся"),
+        L("Общее собрание работников", "General Staff Meeting", "Ажилтнуудын нэгдсэн хурал"),
+        L("Педагогический совет", "Teachers' Council", "Багш нарын зөвлөл"),
+        L("Управляющий совет", "Governing Board", "Удирдах зөвлөл"),
+        L("Совет обучающихся", "Student Council", "Сурагчдын зөвлөл"),
     ]
     gov_html = "\n".join(
-        f'<li><a href="../../docs/organ.pdf" itemprop="structOrgUprav"><span class="ext">PDF</span><span itemprop="name">{n}</span> — {d}<span class="sig">✓ ЭП</span></a></li>'
-        for n, d in gov
+        f'<li><a href="{up}docs/organ.pdf"{ip("structOrgUprav")}><span class="ext">PDF</span><span{ip("name")}>{n}</span> — {reg.lower()}<span class="sig">✓</span></a></li>'
+        for n in gov
     )
-    return NOTE + f"""
-      <h2>Структурные подразделения</h2>
-      {table([("Наименование", "name"), ("Руководитель", "fio"), ("Должность", "post"), ("Адрес", "addressStr"), ("E-mail", "email"), ("Положение", "divisionClauseDocLink")], rows, "structOrgUprav")}
-      <h2>Органы управления</h2>
+    head = [(L("Наименование", "Unit", "Нэгж"), "name"), (L("Руководитель", "Head", "Удирдагч"), "fio"),
+            (L("Должность", "Position", "Албан тушаал"), "post"), (L("Адрес", "Address", "Хаяг"), "addressStr"),
+            ("E-mail", "email"), (reg, "divisionClauseDocLink")]
+    return f"""
+      {h2("Структурные подразделения", "Structural units", "Бүтцийн нэгжүүд")}
+      {table(head, rows, "structOrgUprav")}
+      {h2("Органы управления", "Governing bodies", "Удирдлагын байгууллагууд")}
       <ul class="doc-list">{gov_html}</ul>
 """
 
 
 def page_document():
-    return NOTE + "\n      <h2>Основные документы</h2>\n      " + docs([
-        ("Устав образовательной организации", "ustav.pdf", "ustavDocLink"),
-        ("Правила внутреннего распорядка обучающихся", "pravila-obuch.pdf", "localActStud"),
-        ("Правила внутреннего трудового распорядка", "pravila-trud.pdf", "localActOrder"),
-        ("Коллективный договор", "koldogovor.pdf", "localActCollec"),
-        ("Отчёт о результатах самообследования", "samoobsl.pdf", "reportEduDocLink"),
-        ("Предписания органов госконтроля и отчёты об их исполнении", "predpisaniya.pdf", "prescriptionDocLink"),
-    ]) + "\n      <h2>Локальные нормативные акты</h2>\n      " + docs([
-        ("Правила приёма обучающихся", "priem.pdf", "localActStud"),
-        ("Режим занятий обучающихся", "rezhim.pdf", "localActStud"),
-        ("Положение о формах, периодичности и порядке текущего контроля и промежуточной аттестации", "attestaciya.pdf", "localActStud"),
-        ("Порядок и основания перевода, отчисления и восстановления обучающихся", "perevod.pdf", "localActStud"),
-        ("Порядок оформления возникновения, приостановления и прекращения отношений", "otnosheniya.pdf", "localActStud"),
-    ])
+    heads = [
+        ("Правоустанавливающие документы", L("Правоустанавливающие документы", "Founding documents", "Үүсгэн байгуулах баримт бичиг"), "ustavDocLink"),
+        ("Локальные акты", L("Локальные нормативные акты", "Internal regulations", "Дотоод журам"), "localActStud"),
+        ("Прием в школу", L("Приём в школу", "Admission", "Элсэлт"), "localActStud"),
+        ("Шаблон документов", L("Шаблоны заявлений", "Application templates", "Өргөдлийн загвар"), None),
+        ("ФГОС и ГОС", L("Образовательные стандарты", "Educational standards", "Боловсролын стандарт"), None),
+    ]
+    return "".join(f"""
+      <h2>{title}</h2>
+      {ext_docs(old_group("documents", key), prop)}""" for key, title, prop in heads)
 
 
 def page_education():
+    lv = [L("Начальное общее образование", "Primary general education", "Бага боловсрол"),
+          L("Основное общее образование", "Basic general education", "Суурь боловсрол"),
+          L("Среднее общее образование", "Secondary general education", "Бүрэн дунд боловсрол")]
+    full_time = L("Очная", "Full-time", "Өдрийн")
     progs = [
-        ("—", "Основная образовательная программа начального общего образования", "Начальное общее образование", "Очная", "4 года", "01.06.2027"),
-        ("—", "Основная образовательная программа основного общего образования", "Основное общее образование", "Очная", "5 лет", "01.06.2027"),
-        ("—", "Основная образовательная программа среднего общего образования", "Среднее общее образование", "Очная", "2 года", "01.06.2027"),
+        ("—", L("ООП начального общего образования", "Primary education programme", "Бага боловсролын хөтөлбөр"), lv[0], full_time, L("4 года", "4 years", "4 жил"), "—"),
+        ("—", L("ООП основного общего образования", "Basic education programme", "Суурь боловсролын хөтөлбөр"), lv[1], full_time, L("5 лет", "5 years", "5 жил"), "—"),
+        ("—", L("ООП среднего общего образования", "Secondary education programme", "Бүрэн дунд боловсролын хөтөлбөр"), lv[2], full_time, L("2 года", "2 years", "2 жил"), "—"),
     ]
-    numbers = [
-        ("Начальное общее образование", "320", "320", "0", "0", "0"),
-        ("Основное общее образование", "410", "410", "0", "0", "0"),
-        ("Среднее общее образование", "95", "95", "0", "0", "0"),
-    ]
-    return NOTE + f"""
-      <h2>Реализуемые образовательные программы</h2>
-      {table([("Код", "eduCode"), ("Наименование программы", "eduName"), ("Уровень образования", "eduLevel"), ("Форма обучения", "eduForm"), ("Нормативный срок", "learningTerm"), ("Срок действия аккредитации", "dateEnd")], progs, "eduAccred")}
-      <h2>Документы образовательных программ</h2>
-      {docs([
-        ("ООП НОО (с учебным планом, календарным графиком, рабочими программами)", "oop-noo.pdf", "educationPlan"),
-        ("ООП ООО (с учебным планом, календарным графиком, рабочими программами)", "oop-ooo.pdf", "educationPlan"),
-        ("ООП СОО (с учебным планом, календарным графиком, рабочими программами)", "oop-soo.pdf", "educationPlan"),
-        ("Рабочая программа воспитания и календарный план воспитательной работы", "vospitanie.pdf", "educationRpd"),
-      ])}
-      <h2>Численность обучающихся</h2>
-      {table([("Уровень образования", "eduLevel"), ("Всего", "numberAll"), ("За счёт бюджета РФ", "numberBF"), ("За счёт бюджета субъекта", "numberBR"), ("За счёт местного бюджета", "numberBM"), ("По договорам", "numberP")], numbers, "eduChislen")}
-      <h2>Языки образования</h2>
-      {kv([("Язык обучения", "Русский", "language")])}
-      <h2>Использование ЭО и ДОТ</h2>
-      <p>Обучение с применением электронного обучения и дистанционных образовательных технологий осуществляется с использованием ФГИС «Моя школа» и ИКОП «Сферум».</p>
+    groups = [("НАЧАЛЬНОЕ ОБЩЕЕ ОБРАЗОВАНИЕ", lv[0]), ("ОСНОВНОЕ ОБЩЕЕ ОБРАЗОВАНИЕ", lv[1]), ("СРЕДЕЕ ОБЩЕЕ ОБРАЗОВАНИЕ", lv[2])]
+    prog_docs = "".join(f"""
+      <h3>{name}</h3>
+      {ext_docs(old_group("education", key), "educationRpd")}""" for key, name in groups)
+    exams = ext_docs([(L(f"Расписание {t} в 2026 году", f"{t} exam schedule, 2026", f"{t} шалгалтын хуваарь, 2026"), u)
+                      for t, u in old_group("education", "Расписание экзаменов")])
+    numbers = [(lv[0], "320", "0", "320", "0", "0"), (lv[1], "410", "0", "410", "0", "0"), (lv[2], "95", "0", "95", "0", "0")]
+    return f"""
+      {h2("Реализуемые образовательные программы", "Educational programmes", "Хэрэгжүүлж буй хөтөлбөрүүд")}
+      {table([(L("Код", "Code", "Код"), "eduCode"), (L("Программа", "Programme", "Хөтөлбөр"), "eduName"), (L("Уровень", "Level", "Түвшин"), "eduLevel"),
+              (L("Форма обучения", "Mode of study", "Сургалтын хэлбэр"), "eduForm"), (L("Нормативный срок", "Duration", "Хугацаа"), "learningTerm"),
+              (L("Срок действия аккредитации", "Accreditation valid until", "Магадлан итгэмжлэлийн хугацаа"), "dateEnd")], progs, "eduAccred")}
+      {h2("Учебные планы и рабочие программы", "Curricula and syllabi", "Сургалтын төлөвлөгөө, хөтөлбөрүүд")}
+{prog_docs}
+      {h2("Расписание экзаменов", "Exam schedule", "Шалгалтын хуваарь")}
+      {exams}
+      {h2("Численность обучающихся", "Number of students", "Суралцагчдын тоо")}
+      {table([(L("Уровень", "Level", "Түвшин"), "eduLevel"), (L("Всего", "Total", "Нийт"), "numberAll"),
+              (L("Федеральный бюджет", "Federal budget", "Холбооны төсөв"), "numberBF"), (L("Бюджет субъекта", "Regional budget", "Бүсийн төсөв"), "numberBR"),
+              (L("Местный бюджет", "Local budget", "Орон нутгийн төсөв"), "numberBM"), (L("По договорам", "Fee-paying", "Гэрээгээр"), "numberP")], numbers, "eduChislen")}
+      {h2("Язык образования", "Language of instruction", "Сургалтын хэл")}
+      {kv([(L("Язык обучения", "Language", "Хэл"), school()["languages"], "language")])}
 """
 
 
 def page_eduStandarts():
-    return NOTE + "\n      <h2>Федеральные государственные образовательные стандарты</h2>\n      " + (
-        '<ul class="doc-list">'
-        '<li><a href="https://fgos.ru/fgos/fgos-noo/" itemprop="eduFedDoc" rel="noopener"><span class="ext">URL</span>ФГОС начального общего образования (Приказ Минпросвещения № 286 от 31.05.2021)</a></li>'
-        '<li><a href="https://fgos.ru/fgos/fgos-ooo/" itemprop="eduFedDoc" rel="noopener"><span class="ext">URL</span>ФГОС основного общего образования (Приказ Минпросвещения № 287 от 31.05.2021)</a></li>'
-        '<li><a href="https://fgos.ru/fgos/fgos-soo/" itemprop="eduFedDoc" rel="noopener"><span class="ext">URL</span>ФГОС среднего общего образования (Приказ Минобрнауки № 413 от 17.05.2012)</a></li>'
-        '<li><a href="https://edsoo.ru/" itemprop="eduFedDoc" rel="noopener"><span class="ext">URL</span>Федеральные образовательные программы (ФОП НОО, ООО, СОО)</a></li>'
-        '</ul>'
-        '<h2>Образовательные стандарты</h2><p itemprop="eduStandartDoc">Самостоятельно устанавливаемые образовательные стандарты не применяются.</p>'
-    )
+    items = [
+        ("https://fgos.ru/fgos/fgos-noo/", L("ФГОС начального общего образования (Приказ № 286 от 31.05.2021)", "Federal standard for primary education (Order No. 286, 31.05.2021)", "Бага боловсролын холбооны стандарт (2021.05.31-ний № 286 тушаал)")),
+        ("https://fgos.ru/fgos/fgos-ooo/", L("ФГОС основного общего образования (Приказ № 287 от 31.05.2021)", "Federal standard for basic education (Order No. 287, 31.05.2021)", "Суурь боловсролын холбооны стандарт (2021.05.31-ний № 287 тушаал)")),
+        ("https://fgos.ru/fgos/fgos-soo/", L("ФГОС среднего общего образования (Приказ № 413 от 17.05.2012)", "Federal standard for secondary education (Order No. 413, 17.05.2012)", "Бүрэн дунд боловсролын холбооны стандарт (2012.05.17-ны № 413 тушаал)")),
+        ("https://edsoo.ru/", L("Федеральные образовательные программы (ФОП)", "Federal educational programmes", "Холбооны боловсролын хөтөлбөрүүд")),
+    ]
+    li = "".join(f'<li><a href="{u}"{ip("eduFedDoc")} rel="noopener"><span class="ext">URL</span>{t}</a></li>' for u, t in items)
+    return f"""
+      {h2("Федеральные государственные образовательные стандарты", "Federal State Educational Standards", "Холбооны улсын боловсролын стандарт")}
+      <ul class="doc-list">{li}</ul>
+      {h2("Образовательные стандарты", "Own standards", "Өөрийн стандарт")}
+      <p{ip("eduStandartDoc")}>{L("Самостоятельно устанавливаемые образовательные стандарты не применяются.", "The school does not use its own educational standards.", "Сургууль өөрийн боловсролын стандарт хэрэглэдэггүй.")}</p>
+"""
 
 
-def person(fio, post, rows):
-    dl = "".join(f'<dt>{l}</dt><dd itemprop="{ip}">{v}</dd>' for l, v, ip in rows)
-    return f"""      <div class="person" itemprop="{{prop}}">
-        <div class="person__photo" role="img" aria-label="Фото: {fio}"></div>
-        <div><h3 itemprop="fio">{fio}</h3><div itemprop="post">{post}</div><dl>{dl}</dl></div>
+def person(fio, post, rows, prop):
+    dl = "".join(f"<dt>{l}</dt><dd{ip(p)}>{v}</dd>" for l, v, p in rows)
+    return f"""      <div class="person"{ip(prop)}>
+        <div class="person__photo ph ph-light" role="img" aria-label="{L("Фото", "Photo", "Зураг")}: {fio}"></div>
+        <div><h3{ip("fio")}>{fio}</h3><div{ip("post")}>{post}</div><dl>{dl}</dl></div>
       </div>"""
 
 
 def page_managers():
-    ppl = [
-        ("Иванова Мария Петровна", "Директор", "+7 (000) 000-00-00", "director@example.ru"),
-        ("Петрова Анна Сергеевна", "Заместитель директора по учебно-воспитательной работе", "+7 (000) 000-00-02", "uvr@example.ru"),
-        ("Кузнецов Игорь Владимирович", "Заместитель директора по воспитательной работе", "+7 (000) 000-00-03", "vr@example.ru"),
-    ]
     out = "\n".join(
-        person(f, p, [("Телефон", t, "telephone"), ("E-mail", e, "email")]).replace("{prop}", "rucovodstvo")
-        for f, p, t, e in ppl
+        person(fio(m["fio"]), tr(POSTS, m["post"]),
+               [(L("Телефон", "Phone", "Утас"), phone_fmt(m["phone"]), "telephone"),
+                ("E-mail", f'<a href="mailto:{m["email"]}">{m["email"]}</a>', "email")], "rucovodstvo")
+        for m in OLD["managers"]
     )
-    return NOTE + "\n      <h2>Руководитель и заместители</h2>\n" + out
+    return h2("Руководитель и заместители", "Principal and deputies", "Захирал, орлогч нар") + "\n" + out
+
+
+def pd_html(pd):
+    """Курсы повышения квалификации — по одному в строке (разбиваем после «…, 2023 г.»)."""
+    if not pd:
+        return "—"
+    parts = re.split(r"(?<=\d{4} г\.)\s+(?=\S)|(?<=\d{4}г\.)\s+(?=\S)|(?<=\d{4} год\.)\s+(?=\S)|(?<=\d{4} год)\s+(?=[«“\"А-ЯЁ])", pd)
+    return "<br>".join(x.strip() for x in parts if x.strip())
 
 
 def page_employees():
-    rows = [
-        ("Смирнова Елена Александровна", "Учитель начальных классов", "Высшее", "Педагог-психолог / учитель начальных классов", "Высшая", "—", "2025 г., «Реализация ФОП НОО», 72 ч.", "18 лет", "ООП НОО"),
-        ("Орлов Дмитрий Николаевич", "Учитель математики", "Высшее", "Математика", "Первая", "—", "2024 г., «Методика подготовки к ЕГЭ», 36 ч.", "11 лет", "ООП ООО, ООП СОО"),
-        ("Волкова Наталья Сергеевна", "Учитель русского языка и литературы", "Высшее", "Филология", "Высшая", "к.ф.н.", "2025 г., «Обновлённые ФГОС ООО», 72 ч.", "22 года", "ООП ООО, ООП СОО"),
-    ]
-    head = [("ФИО", "fio"), ("Должность / преподаваемые дисциплины", "post"), ("Образование", "teachingLevel"), ("Направление подготовки / квалификация", "teachingQual"), ("Категория", "qualification"), ("Учёная степень", "degree"), ("Повышение квалификации", "profDevelopment"), ("Стаж", "specExperience"), ("Программы", "teachingOp")]
-    return NOTE + "\n      <h2>Педагогические работники</h2>\n      " + table(head, rows, "teachingStaff")
+    ru = CUR == "ru"
+    rows = []
+    for t in OLD["teachers"]:
+        r = [fio(t["fio"]), tr(POSTS, t["post"])]
+        if ru:
+            r.append(t.get("subjects") or "—")
+        r += [tr(LEVELS, t.get("level", "")), (t.get("spec") or "—").strip("«»"), tr(CATEGORIES, t.get("category", "")).replace(" квалификационная категория", ""), "—",
+              pd_html(t.get("pd")), t.get("exp") or "—"]
+        rows.append(tuple(r))
+    head = [(L("ФИО", "Name", "Овог нэр"), "fio"), (L("Должность", "Position", "Албан тушаал"), "post")]
+    if ru:
+        head.append(("Преподаваемые дисциплины", "teachingDiscipline"))
+    head += [(L("Образование", "Education", "Боловсрол"), "teachingLevel"), (L("Специальность", "Specialisation", "Мэргэжил"), "teachingQual"),
+             (L("Категория", "Category", "Зэрэглэл"), "qualification"), (L("Учёная степень", "Degree", "Эрдмийн зэрэг"), "degree"),
+             (L("Повышение квалификации", "Professional development", "Мэргэжил дээшлүүлэлт"), "profDevelopment"),
+             (L("Стаж, лет", "Experience, years", "Ажилласан жил"), "specExperience")]
+    n = len(OLD["teachers"])
+    lead = L(f"Всего педагогических работников: {n}.",
+             f"{n} teachers in total. Specialisation and professional development are given as in the original Russian records.",
+             f"Нийт {n} багш. Мэргэжил, мэргэжил дээшлүүлэлтийн мэдээллийг эх хувиар нь (орос хэлээр) өгөв.")
+    staff = table(head, rows, "teachingStaff").replace('<div class="table-wrap">', '<div class="table-wrap table-wrap--staff">', 1)
+    return h2("Педагогические работники", "Teachers", "Багш нар") + f"\n      <p>{lead}</p>\n      " + staff
 
 
 def page_objects():
-    return NOTE + f"""
-      <h2>Материально-техническое обеспечение</h2>
+    return f"""
+      {h2("Материально-техническое обеспечение", "Facilities", "Материаллаг-техникийн хангамж")}
       {kv([
-        ("Учебные кабинеты", "32 кабинета, в т.ч. 3 кабинета информатики, лаборатории физики, химии, биологии; центр «Точка роста»", "purposeCab"),
-        ("Библиотека", "Библиотека с читальным залом на 30 мест, фонд — 25 000 экз.", "purposeLibr"),
-        ("Объекты спорта", "2 спортивных зала, стадион, тренажёрный зал", "purposeSport"),
-        ("Средства обучения и воспитания", "Интерактивные панели, ноутбуки, цифровые лаборатории, 3D-принтеры", "meansTraining"),
-        ("Доступ к информационным системам и сетям", "Подключение к ЕСПД, скорость 100 Мбит/с, контентная фильтрация", "comNet"),
-        ("Электронные образовательные ресурсы", "ФГИС «Моя школа», «Сферум», Российская электронная школа", "erList"),
+        (L("Учебные кабинеты", "Classrooms", "Анги танхим"), L("32 кабинета, в т.ч. 3 кабинета информатики, лаборатории физики, химии, биологии; центр «Точка роста»",
+          "32 classrooms including 3 computer labs and physics, chemistry and biology labs; “Growth Point” centre",
+          "32 анги танхим, үүнд 3 мэдээлэл зүйн кабинет, физик, хими, биологийн лаборатори; «Точка роста» төв"), "purposeCab"),
+        (L("Библиотека", "Library", "Номын сан"), L("Читальный зал на 30 мест, фонд — 25 000 экз.", "Reading room for 30, collection of 25,000 items", "30 суудалтай уншлагын танхим, 25 000 ширхэг ном"), "purposeLibr"),
+        (L("Объекты спорта", "Sports facilities", "Спортын байгууламж"), L("2 спортивных зала, стадион, тренажёрный зал", "2 gyms, stadium, fitness room", "2 спорт заал, цэнгэлдэх, фитнес танхим"), "purposeSport"),
+        (L("Средства обучения", "Learning equipment", "Сургалтын хэрэгсэл"), L("Интерактивные панели, ноутбуки, цифровые лаборатории, 3D-принтеры", "Interactive panels, laptops, digital labs, 3D printers", "Интерактив самбар, зөөврийн компьютер, дижитал лаборатори, 3D принтер"), "meansTraining"),
+        (L("Доступ к сети Интернет", "Internet access", "Интернэт холболт"), L("100 Мбит/с, контентная фильтрация", "100 Mbit/s with content filtering", "100 Мбит/с, агуулгын шүүлтүүртэй"), "comNet"),
       ])}
-      <h2>Доступная среда</h2>
+      {h2("Доступная среда", "Accessible environment", "Хүртээмжтэй орчин")}
       {kv([
-        ("Специально оборудованные кабинеты", "Кабинет педагога-психолога и логопеда, сенсорная комната", "purposeCabOvz"),
-        ("Обеспечение беспрепятственного доступа в здание", "Пандус, кнопка вызова, тактильная плитка, мнемосхема, расширенные дверные проёмы", "ovz"),
-        ("Специальные средства обучения", "Портативные индукционные системы, ПО экранного доступа", "meansTrainingOvz"),
-        ("Условия питания и охраны здоровья для лиц с ОВЗ", "Диетическое меню по показаниям, медицинский кабинет", "meansMealsOvz"),
-        ("Электронные ресурсы, адаптированные для лиц с ОВЗ", "Сайт имеет версию для слабовидящих (ГОСТ Р 52872-2019)", "erListOvz"),
+        (L("Специально оборудованные кабинеты", "Specially equipped rooms", "Тусгайлан тоноглосон өрөө"), L("Кабинет психолога и логопеда, сенсорная комната", "Psychologist and speech therapist rooms, sensory room", "Сэтгэл зүйч, хэл заслын өрөө, мэдрэхүйн өрөө"), "purposeCabOvz"),
+        (L("Доступ в здание", "Building access", "Байранд нэвтрэх"), L("Пандус, кнопка вызова, тактильная плитка, мнемосхема", "Ramp, call button, tactile paving, tactile map", "Налуу зам, дуудлагын товч, мэдрэхүйн хавтан, мнемосхем"), "ovz"),
+        (L("Электронные ресурсы для лиц с ОВЗ", "Accessible e-resources", "Хөгжлийн бэрхшээлтэй хүмүүст зориулсан цахим нөөц"), L("Версия сайта для слабовидящих (ГОСТ Р 52872-2019)", "Low vision version of the website", "Вэбсайтын хараа муу хүмүүст зориулсан хувилбар"), "erListOvz"),
       ])}
 """
 
 
 def page_paid_edu():
-    return NOTE + "\n      <h2>Документы о платных образовательных услугах</h2>\n      " + docs([
-        ("Положение о порядке оказания платных образовательных услуг", "paid-polozhenie.pdf", "paidEdu"),
-        ("Образец договора об оказании платных образовательных услуг", "paid-dogovor.pdf", "paidDog"),
-        ("Документ об утверждении стоимости обучения", "paid-stoimost.pdf", "paidSt"),
+    return h2("Платные образовательные услуги", "Paid services", "Төлбөртэй үйлчилгээ") + "\n      " + docs([
+        (L("Положение о порядке оказания платных образовательных услуг", "Regulations on paid educational services", "Төлбөртэй боловсролын үйлчилгээ үзүүлэх журам"), "paid-polozhenie.pdf", "paidEdu"),
+        (L("Образец договора", "Sample contract", "Гэрээний загвар"), "paid-dogovor.pdf", "paidDog"),
+        (L("Документ об утверждении стоимости обучения", "Approved tuition fees", "Сургалтын төлбөр баталсан баримт"), "paid-stoimost.pdf", "paidSt"),
     ])
 
 
 def page_budget():
-    return NOTE + f"""
-      <h2>Объём образовательной деятельности</h2>
+    rub = L(" руб.", " RUB", " рубль")
+    return f"""
+      {h2("Объём образовательной деятельности", "Funding of educational activities", "Боловсролын үйл ажиллагааны санхүүжилт")}
       {kv([
-        ("За счёт бюджета РФ", "0 руб.", "finBFVolume"),
-        ("За счёт бюджета субъекта РФ", "85 400 000 руб.", "finBRVolume"),
-        ("За счёт местного бюджета", "12 300 000 руб.", "finBMVolume"),
-        ("По договорам об оказании платных услуг", "1 200 000 руб.", "finPVolume"),
+        (L("Федеральный бюджет", "Federal budget", "Холбооны төсөв"), "0" + rub, "finBFVolume"),
+        (L("Бюджет субъекта РФ", "Regional budget", "Бүсийн төсөв"), "85 400 000" + rub, "finBRVolume"),
+        (L("Местный бюджет", "Local budget", "Орон нутгийн төсөв"), "12 300 000" + rub, "finBMVolume"),
+        (L("По договорам", "Fee-paying contracts", "Гэрээгээр"), "1 200 000" + rub, "finPVolume"),
       ])}
-      <h2>Документы</h2>
+      {h2("Документы", "Documents", "Баримт бичиг")}
       {docs([
-        ("План финансово-хозяйственной деятельности на 2026 год", "pfhd-2026.pdf", "finPlanDocLink"),
-        ("Информация о поступлении и расходовании финансовых и материальных средств за 2025 год", "finrec-2025.pdf", "finRec"),
+        (L("План финансово-хозяйственной деятельности на 2026 год", "2026 financial plan", "2026 оны санхүү, аж ахуйн төлөвлөгөө"), "pfhd-2026.pdf", "finPlanDocLink"),
+        (L("Поступление и расходование средств за 2025 год", "2025 income and expenditure report", "2025 оны орлого, зарлагын тайлан"), "finrec-2025.pdf", "finRec"),
       ])}
 """
 
 
 def page_vacant():
-    rows = [(f"{c} класс", lvl, "Очная", v, "0", "0", "0") for c, lvl, v in [
-        ("1", "Начальное общее", "4"), ("2", "Начальное общее", "1"), ("5", "Основное общее", "3"),
-        ("7", "Основное общее", "0"), ("10", "Среднее общее", "6"),
-    ]]
-    head = [("Класс", "eduCode"), ("Уровень", "eduLevel"), ("Форма", "eduForm"), ("Мест за счёт бюджета субъекта", "numberBRVacant"), ("Федеральный бюджет", "numberBFVacant"), ("Местный бюджет", "numberBMVacant"), ("По договорам", "numberPVacant")]
-    return NOTE + '\n      <h2>Количество вакантных мест (на 01.11.2026)</h2>\n      ' + table(head, rows, "vacant")
+    grade = L("{} класс", "Grade {}", "{}-р анги")
+    data = [("1", 0, "4"), ("2", 0, "1"), ("5", 1, "3"), ("7", 1, "0"), ("10", 2, "6")]
+    lv = [L("Начальное общее", "Primary", "Бага"), L("Основное общее", "Basic", "Суурь"), L("Среднее общее", "Secondary", "Бүрэн дунд")]
+    rows = [(grade.format(g), lv[l], L("Очная", "Full-time", "Өдрийн"), v, "0", "0", "0") for g, l, v in data]
+    head = [(L("Класс", "Grade", "Анги"), "eduCode"), (L("Уровень", "Level", "Түвшин"), "eduLevel"), (L("Форма", "Mode", "Хэлбэр"), "eduForm"),
+            (L("Бюджет субъекта", "Regional budget", "Бүсийн төсөв"), "numberBRVacant"), (L("Федеральный бюджет", "Federal budget", "Холбооны төсөв"), "numberBFVacant"),
+            (L("Местный бюджет", "Local budget", "Орон нутгийн төсөв"), "numberBMVacant"), (L("По договорам", "Fee-paying", "Гэрээгээр"), "numberPVacant")]
+    return h2("Количество вакантных мест (на 01.11.2026)", "Vacant places (as of 1 November 2026)", "Сул орон тоо (2026.11.01-ний байдлаар)") + "\n      " + table(head, rows, "vacant")
 
 
 def page_grants():
-    return NOTE + f"""
-      {kv([
-        ("Условия предоставления стипендий", "Стипендии не предусмотрены", "grant"),
-        ("Меры социальной поддержки", "Бесплатное горячее питание для 1–4 классов и льготных категорий; бесплатный подвоз; бесплатные учебники", "support"),
-        ("Общежитие, интернат", "Не предусмотрено", "hostelInfo"),
-        ("Трудоустройство выпускников", "Информация о поступлении выпускников 9 и 11 классов публикуется ежегодно", "graduateJob"),
-      ])}
-"""
+    return kv([
+        (L("Стипендии", "Scholarships", "Тэтгэлэг"), L("Не предусмотрены", "Not provided", "Олгодоггүй"), "grant"),
+        (L("Меры социальной поддержки", "Student support", "Нийгмийн дэмжлэг"),
+         L("Бесплатное горячее питание для 1–4 классов и льготных категорий; бесплатный подвоз; бесплатные учебники",
+           "Free hot meals for grades 1–4 and eligible students; free school transport; free textbooks",
+           "1–4-р анги болон хөнгөлөлттэй ангиллын сурагчдад үнэгүй халуун хоол; үнэгүй тээвэр; үнэгүй сурах бичиг"), "support"),
+        (L("Общежитие, интернат", "Dormitory", "Дотуур байр"), L("Не предусмотрено", "Not available", "Байхгүй"), "hostelInfo"),
+    ])
 
 
 def page_inter():
-    return NOTE + f"""
-      {kv([
-        ("Заключённые договоры с иностранными организациями", "Договоров нет", "internationalDog"),
-        ("Международная аккредитация", "Нет", "intAccreditation"),
-      ])}
-"""
+    return kv([
+        (L("Договоры с иностранными организациями", "Agreements with foreign organisations", "Гадаадын байгууллагатай байгуулсан гэрээ"), L("Договоров нет", "None", "Байхгүй"), "internationalDog"),
+        (L("Международная аккредитация", "International accreditation", "Олон улсын магадлан итгэмжлэл"), L("Нет", "None", "Байхгүй"), "intAccreditation"),
+    ])
 
 
 def page_catering():
-    return NOTE + f"""
-      <h2>Условия питания</h2>
+    return f"""
+      {h2("Условия питания", "Catering", "Хоол хүнсний нөхцөл")}
       {kv([
-        ("Столовая", "Обеденный зал на 220 посадочных мест, полный цикл приготовления", "meals"),
-        ("Охрана здоровья обучающихся", "Медицинский кабинет, лицензированный медицинский работник по договору с ГБУЗ", "health"),
-        ("Горячая линия по питанию", "+7 (000) 000-00-05, министерство просвещения региона", None),
+        (L("Столовая", "Canteen", "Цайны газар"), L("Обеденный зал на 220 мест, полный цикл приготовления", "Dining hall for 220 with full-cycle kitchen", "220 суудалтай хоолны танхим, бүрэн циклийн гал тогоо"), "meals"),
+        (L("Охрана здоровья", "Health care", "Эрүүл мэнд"), L("Медицинский кабинет", "On-site medical room", "Эмнэлгийн өрөө"), "health"),
+        (L("Телефон по вопросам питания", "Meals enquiries", "Хоолны асуудлаарх утас"), school()["phone"], None),
       ])}
-      <h2>Документы по питанию</h2>
+      {h2("Документы по питанию", "Documents", "Баримт бичиг")}
       {docs([
-        ("Примерное цикличное меню", "menu-cikl.pdf", None),
-        ("Ежедневное меню (папка food/)", "food-index.pdf", None),
-        ("Положение об организации питания обучающихся", "pitanie-polozhenie.pdf", None),
-        ("Перечень юридических лиц и ИП, оказывающих услуги по питанию", "postavshiki.pdf", None),
+        (L("Примерное цикличное меню", "Cyclic menu", "Мөчлөгт цэс"), "menu-cikl.pdf", None),
+        (L("Положение об организации питания", "Catering regulations", "Хоол хүнсний журам"), "pitanie-polozhenie.pdf", None),
       ])}
-      <p>Ежедневные меню размещаются в каталоге <code>/food/</code> в формате XLSX по методическим рекомендациям МР 2.4.0179-20.</p>
+      <p>{L("Ежедневные меню размещаются в каталоге <code>/food/</code> в формате XLSX (МР 2.4.0179-20).",
+            "Daily menus are published in the <code>/food/</code> folder (XLSX).",
+            "Өдөр тутмын цэсийг <code>/food/</code> хавтсанд XLSX хэлбэрээр байршуулдаг.")}</p>
 """
 
 
@@ -491,39 +727,86 @@ PAGES = [page_common, page_struct, page_document, page_education, page_eduStanda
          page_employees, page_objects, page_paid_edu, page_budget, page_vacant, page_grants, page_inter, page_catering]
 
 
-# ------------------------------------------------------------------ home & index
+# ------------------------------------------------------------------ home, index, contacts
+def photo(name, top):
+    """Если в assets/img/ лежит файл (напр. tile-1.jpg) — подставляем его как фон."""
+    for ext in ("jpg", "jpeg", "png", "webp"):
+        if (ROOT / "assets" / "img" / f"{name}.{ext}").exists():
+            return f' style="--img:url(\'{top}assets/img/{name}.{ext}\')"'
+    return ""
+
+
 def home():
-    sv_cards = "\n".join(
-        f'        <a class="card" href="sveden/{s}/index.html"><span class="card__icon" aria-hidden="true">{ICONS[i]}</span><h3>{n}</h3></a>'
-        for i, (s, n) in enumerate(SVEDEN[:8])
-    )
-    news = [
-        ("20 ноября 2026", "Школьный этап всероссийской олимпиады завершён", "Подведены итоги: 46 учащихся вышли в муниципальный этап."),
-        ("14 ноября 2026", "День открытых дверей для будущих первоклассников", "Приглашаем родителей познакомиться с учителями и программами."),
-        ("05 ноября 2026", "Новая лаборатория «Точка роста»", "Открыт кабинет робототехники и цифровых лабораторий."),
+    S, names = school(), sveden_names()
+    top = "" if CUR == "ru" else "../"
+    tiles = [
+        ("sveden/index.html", L("Сведения об образовательной организации", "About the School", "Сургуулийн тухай мэдээлэл"), L("14 подразделов", "14 subsections", "14 дэд хэсэг")),
+        ("index.html#news", L("Новости и события", "News and events", "Мэдээ, үйл явдал"), L("Жизнь школы", "School life", "Сургуулийн амьдрал")),
+        ("index.html#parents", L("Родителям и ученикам", "For parents and students", "Эцэг эх, сурагчдад"), L("Полезное", "Useful", "Хэрэгтэй")),
+        ("sveden/catering/index.html", L("Питание", "School meals", "Хоол хүнс"), L("Меню", "Menu", "Цэс")),
     ]
+    tiles_html = "\n".join(
+        f'        <a class="tile ph ph-{i + 1}" href="{h}"{photo(f"tile-{i + 1}", top)}><h3>{t}</h3><span class="tile__chip">{c}</span></a>'
+        for i, (h, t, c) in enumerate(tiles)
+    )
+    sv_cards = "\n".join(
+        f'        <a class="card" href="sveden/{s}/index.html"><span class="card__icon" aria-hidden="true">{ICONS[i]}</span><h3>{names[i]}</h3><p>/sveden/{s}</p></a>'
+        for i, s in enumerate(SVEDEN_SLUGS[:8])
+    )
+    news_tr = {
+        "Результаты соревнований": ("Pioneerball tournament results for grade 6", "6-р ангийн «Пионербол»-ын тэмцээний дүн"),
+        "Участие в III Международных": ("Taking part in the 3rd International Engineering Competition", "III Олон улсын инженерийн тэмцээнд оролцлоо"),
+        "Онлайн-зачет": ("Online financial literacy test", "Санхүүгийн боловсролын онлайн шалгалт"),
+        "Интеллектуальная игра": ("“BioMatius” quiz game for grade 11", "11-р ангийн «БиоМатиус» оюуны тоглоом"),
+        "День открытых дверей": ("School Open Day", "Сургуулийн нээлттэй хаалганы өдөр"),
+        "Участие в международном турнире": ("“Power of Mind” international tournament", "«Оюуны хүч» олон улсын тэмцээнд оролцлоо"),
+        "День самоуправления": ("Student Self-Government Day", "Сурагчдын өөрөө удирдах өдөр"),
+        "Выборы президента": ("School No. 19 elects its student president", "19-р сургуулийн сурагчдын ерөнхийлөгчийн сонгууль боллоо"),
+    }
+    news = []
+    for n in OLD["news"][:6]:
+        en, mn = next((v for k, v in news_tr.items() if n["title"].startswith(k)), (n["title"], n["title"]))
+        text = n["text"][len(n["title"]):].strip() if n["text"].startswith(n["title"]) else n["text"]
+        text = (text[:160].rsplit(" ", 1)[0] + "…") if len(text) > 160 else text
+        y, m, d = n["date"].split("-")
+        news.append((f"{d}.{m}.{y}", L(n["title"].rstrip("."), en, mn), L(text, "", "")))
     news_html = "\n".join(
-        f'        <article class="card"><div class="news-img" role="img" aria-label="Иллюстрация к новости"></div><div class="card__date">{d}</div><h3>{t}</h3><p>{x}</p></article>'
+        f'        <article class="card news-card"><h3>{t}</h3>' + (f'<p>{x}</p>' if x else '') + f'<div class="card__date">{d}</div></article>'
         for d, t, x in news
     )
     body = f"""
   <section class="hero">
-    <div class="container">
+    <div class="container hero__top">
       <div>
-        <span class="hero__eyebrow">Приём в 1-й класс на 2027/2028 учебный год — с 1 апреля</span>
-        <h1>{SCHOOL["short"]}</h1>
-        <p class="lead">Современная школа, где каждый ученик раскрывает свои способности. Начальное, основное и среднее общее образование в {SCHOOL["city"].replace("г. ", "городе ")}.</p>
-        <div class="hero__actions">
-          <a class="btn btn--primary" href="sveden/index.html">Сведения об образовательной организации</a>
-          <a class="btn btn--ghost" href="contacts.html">Контакты</a>
-        </div>
+        <h1>{S["short"]}</h1>
+        <p class="lead">{L("Современная школа, где каждый ученик раскрывает свои способности",
+                            "A modern school where every student discovers their talents",
+                            "Сурагч бүр авьяас чадвараа нээх орчин үеийн сургууль")}</p>
       </div>
-      <div class="hero__card">
-        <div class="hero__stats">
-          <div class="stat"><b>825</b><span>обучающихся</span></div>
-          <div class="stat"><b>64</b><span>педагога</span></div>
-          <div class="stat"><b>50+</b><span>кружков и секций</span></div>
-          <div class="stat"><b>1975</b><span>год основания</span></div>
+      <div class="hero-pill">
+        <p>{L("Приём в 1-й класс на 2027/2028 учебный год начинается 1 апреля",
+              "Grade 1 admissions for 2027/2028 open on 1 April",
+              "2027/2028 оны 1-р ангийн элсэлт 4-р сарын 1-нд эхэлнэ")} <span class="ico" aria-hidden="true">🎒</span></p>
+        <a class="btn btn--primary btn--sm" href="https://www.gosuslugi.ru/" rel="noopener">{L("Подать заявление", "Apply", "Өргөдөл гаргах")}</a>
+      </div>
+    </div>
+    <div class="container" style="margin-top:2.2rem">
+      <div class="tiles">
+{tiles_html}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="promo">
+        <div class="promo__img ph ph-light"{photo("promo", top)} role="img" aria-label="{L("Фото школы", "School photo", "Сургуулийн зураг")}"></div>
+        <div class="promo__body">
+          <h2>{L("Сведения об образовательной организации", "About the School", "Сургуулийн тухай мэдээлэл")}</h2>
+          <p>{L("Вся официальная информация о школе в соответствии с Приказом Рособрнадзора № 1493: документы, образовательные программы, педагогический состав, питание, вакантные места и многое другое.",
+                "All official information about the school under Rosobrnadzor Order No. 1493: documents, programmes, teaching staff, meals, vacancies and more.",
+                "Рособрнадзорын № 1493 тушаалын дагуу сургуулийн албан ёсны бүх мэдээлэл: баримт бичиг, хөтөлбөр, багшийн бүрэлдэхүүн, хоол хүнс, сул орон тоо гэх мэт.")}</p>
+          <a class="btn btn--primary" href="sveden/index.html">{L("Перейти в раздел", "Open section", "Хэсэг рүү орох")}</a>
         </div>
       </div>
     </div>
@@ -531,19 +814,35 @@ def home():
 
   <section class="section">
     <div class="container">
-      <div class="section__head">
-        <div><h2>Сведения об образовательной организации</h2><p>Обязательный раздел по Приказу Рособрнадзора № 1493</p></div>
-        <a class="btn btn--ghost" href="sveden/index.html">Все 14 подразделов →</a>
-      </div>
       <div class="grid grid--4">
 {sv_cards}
       </div>
     </div>
   </section>
 
-  <section class="section section--soft" id="news">
+  <section class="section">
     <div class="container">
-      <div class="section__head"><h2>Новости</h2></div>
+      <div class="promo promo--reverse">
+        <div class="promo__img ph ph-light"{photo("about", top)} role="img" aria-label="{L("Фото педагогов", "Teachers photo", "Багш нарын зураг")}"></div>
+        <div class="promo__body">
+          <h2>{L("Наша школа", "Our school", "Манай сургууль")}</h2>
+          <p>{L("Школа – это особый мир, мир изумительный и необычный. С 1974 года мы даём начальное, основное и среднее общее образование на русском и монгольском языках.",
+                "School is a special world, wonderful and unusual. Since 1974 we have provided primary, basic and secondary education in Russian and Mongolian.",
+                "Сургууль бол гайхамшигтай, онцгой ертөнц. 1974 оноос хойш бага, суурь, бүрэн дунд боловсролыг орос, монгол хэлээр олгож байна.")}</p>
+          <div class="stats">
+            <div><b>{len(OLD["teachers"])}</b><span>{L("педагогов", "teachers", "багш")}</span></div>
+            <div><b>{len(OLD["managers"])}</b><span>{L("в администрации", "administrators", "удирдлага")}</span></div>
+            <div><b>2</b><span>{L("языка обучения", "languages of instruction", "сургалтын хэл")}</span></div>
+            <div><b>1974</b><span>{L("год основания", "founded", "байгуулагдсан")}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="news">
+    <div class="container">
+      <div class="section__head"><h2>{L("Новости", "News", "Мэдээ")}</h2><a class="btn btn--ghost" href="index.html#news">{L("Все новости", "All news", "Бүх мэдээ")}</a></div>
       <div class="grid grid--3">
 {news_html}
       </div>
@@ -552,74 +851,94 @@ def home():
 
   <section class="section" id="parents">
     <div class="container">
-      <div class="section__head"><h2>Родителям и ученикам</h2></div>
+      <div class="section__head"><h2>{L("Родителям и ученикам", "For parents and students", "Эцэг эх, сурагчдад")}</h2></div>
       <div class="grid grid--4">
-        <a class="card" href="https://www.gosuslugi.ru/" rel="noopener"><span class="card__icon" aria-hidden="true">📝</span><h3>Запись в 1-й класс</h3><p>Подача заявления через Госуслуги</p></a>
-        <a class="card" href="https://myschool.edu.ru/" rel="noopener"><span class="card__icon" aria-hidden="true">📚</span><h3>Электронный дневник</h3><p>ФГИС «Моя школа»</p></a>
-        <a class="card" href="sveden/catering/index.html"><span class="card__icon" aria-hidden="true">🍎</span><h3>Меню питания</h3><p>Ежедневное меню столовой</p></a>
-        <a class="card" href="sveden/vacant/index.html"><span class="card__icon" aria-hidden="true">🪑</span><h3>Свободные места</h3><p>Вакантные места для приёма</p></a>
+        <a class="card" href="https://www.gosuslugi.ru/" rel="noopener"><span class="card__icon" aria-hidden="true">📝</span><h3>{L("Запись в 1-й класс", "Grade 1 enrolment", "1-р ангид бүртгүүлэх")}</h3><p>{L("Заявление через Госуслуги", "Apply via Gosuslugi", "Госуслуги-ээр өргөдөл гаргах")}</p></a>
+        <a class="card" href="https://myschool.edu.ru/" rel="noopener"><span class="card__icon" aria-hidden="true">📚</span><h3>{L("Электронный дневник", "Electronic diary", "Цахим өдрийн тэмдэглэл")}</h3><p>{L("ФГИС «Моя школа»", "“My School” platform", "«Моя школа» платформ")}</p></a>
+        <a class="card" href="sveden/catering/index.html"><span class="card__icon" aria-hidden="true">🍎</span><h3>{L("Меню питания", "Menu", "Хоолны цэс")}</h3><p>{L("Ежедневное меню столовой", "Daily canteen menu", "Өдөр тутмын цэс")}</p></a>
+        <a class="card" href="sveden/vacant/index.html"><span class="card__icon" aria-hidden="true">🪑</span><h3>{L("Свободные места", "Vacant places", "Сул орон тоо")}</h3><p>{L("Вакантные места для приёма", "Places available for admission", "Элсэлтийн сул орон тоо")}</p></a>
       </div>
     </div>
   </section>
 
   <section class="section">
     <div class="container">
-      <!-- Замените этот блок на виджет Платформы обратной связи (ПОС) Госуслуг:
-           код выдаётся в личном кабинете организации на pos.gosuslugi.ru -->
+      <!-- Замените этот блок на виджет ПОС Госуслуг (код — в кабинете pos.gosuslugi.ru) -->
       <div class="pos-banner" id="pos-widget">
-        <div><h2>Не убедились в ответе? Напишите нам через Госуслуги</h2><p>Платформа обратной связи — обращения, жалобы и предложения</p></div>
-        <a class="btn" href="https://pos.gosuslugi.ru/" rel="noopener">Написать обращение</a>
+        <div>
+          <h2>{L("Есть вопрос или предложение?", "Have a question or suggestion?", "Асуулт, санал байна уу?")}</h2>
+          <p>{L("Напишите нам через платформу обратной связи Госуслуг — мы ответим в установленный срок.",
+                "Write to us via the Gosuslugi feedback platform and we will reply within the official deadline.",
+                "Госуслуги-ийн санал хүсэлтийн платформоор бидэнд бичээрэй, тогтоосон хугацаанд хариу өгнө.")}</p>
+        </div>
+        <div>
+          <a class="btn btn--primary" href="https://pos.gosuslugi.ru/" rel="noopener">{L("Написать обращение", "Send a request", "Өргөдөл илгээх")}</a>
+          <small>{L("Для отправки потребуется подтверждённая учётная запись Госуслуг", "A verified Gosuslugi account is required", "Баталгаажсан Госуслуги бүртгэл шаардлагатай")}</small>
+        </div>
       </div>
     </div>
   </section>
 """
-    return layout("Главная", body, depth=0, current="home")
+    return layout(L("Главная", "Home", "Нүүр"), body, "index.html", current="home")
 
 
 def sveden_index():
+    names = sveden_names()
     cards = "\n".join(
-        f'        <a class="card" href="{s}/index.html"><span class="card__icon" aria-hidden="true">{ICONS[i]}</span><h3>{i + 1}. {n}</h3><p>/sveden/{s}</p></a>'
-        for i, (s, n) in enumerate(SVEDEN)
+        f'        <a class="card" href="{s}/index.html"><span class="card__icon" aria-hidden="true">{ICONS[i]}</span><h3>{i + 1}. {names[i]}</h3><p>/sveden/{s}</p></a>'
+        for i, s in enumerate(SVEDEN_SLUGS)
     )
+    intro = L(
+        "Раздел сформирован в соответствии с Приказом Рособрнадзора от 04.08.2023 № 1493 «Об утверждении Требований к структуре официального сайта образовательной организации в информационно-телекоммуникационной сети «Интернет» и формату представления информации».",
+        'This section follows Rosobrnadzor Order No. 1493 of 4 August 2023. The official version is in <a href="../../sveden/index.html">Russian</a>.',
+        'Энэ хэсгийг Рособрнадзорын 2023.08.04-ний № 1493 тушаалын дагуу бүрдүүлсэн. Албан ёсны хувилбар нь <a href="../../sveden/index.html">орос хэл дээр</a>.',
+    )
+    title = L("Сведения об образовательной организации", "About the School", "Сургуулийн тухай мэдээлэл")
     body = f"""
   <section class="section">
     <div class="container">
-      <p class="note">Раздел сформирован в соответствии с Приказом Рособрнадзора от 04.08.2023 № 1493 «Об утверждении Требований к структуре официального сайта образовательной организации в информационно-телекоммуникационной сети «Интернет» и формату представления информации».</p>
+      <p class="note">{intro}</p>
       <div class="grid grid--3">
 {cards}
       </div>
     </div>
   </section>"""
-    return layout("Сведения об образовательной организации", body, depth=1, current="sveden",
-                  crumbs=[("Главная", "index.html"), ("Сведения об образовательной организации", None)])
+    return layout(title, body, "sveden/index.html", current="sveden",
+                  crumbs=[(L("Главная", "Home", "Нүүр"), "index.html"), (title, None)])
 
 
 def contacts():
+    S = school()
+    title = L("Контакты", "Contacts", "Холбоо барих")
     body = f"""
   <div class="container" style="padding:2.5rem 0 4rem">
     {kv([
-      ("Адрес", SCHOOL["address"], "address"),
-      ("Телефон приёмной", SCHOOL["phone"], "telephone"),
-      ("E-mail", f'<a href="mailto:{SCHOOL["email"]}">{SCHOOL["email"]}</a>', "email"),
-      ("Режим работы", SCHOOL["hours"], "workTime"),
-      ("Директор", SCHOOL["director"], None),
+      (L("Адрес", "Address", "Хаяг"), S["address"], "address"),
+      (L("Телефон приёмной", "Reception", "Хүлээн авах утас"), S["phone"], "telephone"),
+      ("E-mail", f'<a href="mailto:{S["email"]}">{S["email"]}</a>', "email"),
+      (L("Режим работы", "Working hours", "Ажлын цаг"), S["hours"], "workTime"),
+      (L("Директор", "Principal", "Захирал"), S["director"], None),
     ])}
-    <p class="note">Сюда можно встроить карту (рекомендуется Яндекс Карты — российский сервис).</p>
   </div>"""
-    return layout("Контакты", body, depth=0, current="contacts",
-                  crumbs=[("Главная", "index.html"), ("Контакты", None)])
+    return layout(title, body, "contacts.html", current="contacts",
+                  crumbs=[(L("Главная", "Home", "Нүүр"), "index.html"), (title, None)])
 
 
 def write(path, html):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(html, encoding="utf-8")
-    print("  ✓", path.relative_to(ROOT))
 
 
 if __name__ == "__main__":
-    write(ROOT / "index.html", home())
-    write(ROOT / "contacts.html", contacts())
-    write(ROOT / "sveden" / "index.html", sveden_index())
-    for i, fn in enumerate(PAGES):
-        write(ROOT / "sveden" / SVEDEN[i][0] / "index.html", sveden_page(i, fn()))
-    print("Готово.")
+    count = 0
+    for code, _, _ in LANGS:
+        CUR = code
+        base = ROOT if code == "ru" else ROOT / code
+        write(base / "index.html", home())
+        write(base / "contacts.html", contacts())
+        write(base / "sveden" / "index.html", sveden_index())
+        for i, fn in enumerate(PAGES):
+            write(base / "sveden" / SVEDEN_SLUGS[i] / "index.html", sveden_page(i, fn()))
+        count += 3 + len(PAGES)
+        print(f"  ✓ {code}: {3 + len(PAGES)} страниц")
+    print(f"Готово: {count} страниц.")

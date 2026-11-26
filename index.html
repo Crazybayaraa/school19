@@ -3,20 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Главная — МБОУ «СОШ № 1»</title>
-  <meta name="description" content="Официальный сайт МБОУ «СОШ № 1», г. Примерск">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <title>Главная — СОШ № 19</title>
+  <meta name="description" content="Официальный сайт СОШ № 19, г. Эрдэнэт">
+  <link rel="alternate" hreflang="ru" href="http://erdenetschool.edu.mn/">
+  <link rel="alternate" hreflang="en" href="http://erdenetschool.edu.mn/en/">
+  <link rel="alternate" hreflang="mn" href="http://erdenetschool.edu.mn/mn/">
+  <link rel="stylesheet" href="assets/css/style.css?v=f1170095">
   <script>try{var s=JSON.parse(localStorage.getItem('a11y-settings'));if(s&&s.on)document.documentElement.classList.add('a11y')}catch(e){}</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Перейти к содержимому</a>
 
-<div class="a11y-panel" role="region" aria-label="Настройки версии для слабовидящих">
+<div class="a11y-panel" role="region" aria-label="Версия для слабовидящих">
   <div class="container">
     <fieldset><legend>Размер шрифта:</legend>
-      <button type="button" data-a11y-set="fs:1">А</button>
-      <button type="button" data-a11y-set="fs:2" style="font-size:1.2em">А</button>
-      <button type="button" data-a11y-set="fs:3" style="font-size:1.4em">А</button>
+      <button type="button" data-a11y-set="fs:1">A</button>
+      <button type="button" data-a11y-set="fs:2" style="font-size:1.2em">A</button>
+      <button type="button" data-a11y-set="fs:3" style="font-size:1.4em">A</button>
     </fieldset>
     <fieldset><legend>Цвет:</legend>
       <button type="button" data-a11y-set="scheme:wb" aria-label="Чёрным по белому">Ц</button>
@@ -32,58 +35,75 @@
       <button type="button" data-a11y-set="ls:false">Обычный</button>
       <button type="button" data-a11y-set="ls:true">Большой</button>
     </fieldset>
+    <button type="button" class="btn-a11y a11y-panel__reset" aria-pressed="true" data-label-on="Версия для слабовидящих" data-label-off="Обычная версия"><span class="ico" aria-hidden="true">👁</span><span> Обычная версия</span></button>
   </div>
 </div>
 
 <div class="topbar">
   <div class="container">
     <div class="topbar__info">
-      <span>📞 <a href="tel:+70000000000">+7 (000) 000-00-00</a></span>
-      <span>✉ <a href="mailto:school1@example.ru">school1@example.ru</a></span>
-      <span>🕘 Пн–Пт: 08:00–18:00, Сб: 08:00–14:00, Вс: выходной</span>
+      <span><span class="ico" aria-hidden="true">📞</span> <a href="tel:+97675773858">+976 7577-3858</a></span>
+      <span><span class="ico" aria-hidden="true">✉</span> <a href="mailto:school19@erdenetmc.mn">school19@erdenetmc.mn</a></span>
+      <span><span class="ico" aria-hidden="true">🕘</span> 8:00–18:30</span>
     </div>
-    <button type="button" class="btn-a11y" aria-pressed="false"><span aria-hidden="true">👁</span><span> Версия для слабовидящих</span></button>
+    <div class="topbar__tools">
+      <nav class="lang-switch" aria-label="Язык"><a href="index.html" hreflang="ru" lang="ru" title="Русский" aria-current="true">RU</a><a href="en/index.html" hreflang="en" lang="en" title="English">EN</a><a href="mn/index.html" hreflang="mn" lang="mn" title="Монгол">MN</a></nav>
+      <button type="button" class="btn-a11y" aria-pressed="false" data-label-on="Версия для слабовидящих" data-label-off="Обычная версия"><span class="ico" aria-hidden="true">👁</span><span> Версия для слабовидящих</span></button>
+    </div>
   </div>
 </div>
 
 <header class="header">
   <div class="container">
     <a class="brand" href="index.html">
-      <span class="brand__logo" aria-hidden="true">№1</span>
-      <span class="brand__name">МБОУ «СОШ № 1»<small>г. Примерск</small></span>
+      <span class="brand__logo" aria-hidden="true">№19</span>
+      <span class="brand__name">СОШ № 19<small>г. Эрдэнэт</small></span>
     </a>
     <button class="nav-toggle" type="button" aria-controls="main-nav" aria-expanded="false">☰ Меню</button>
     <nav class="nav" id="main-nav" aria-label="Основное меню">
       <ul>
         <li><a href="index.html" aria-current="page">Главная</a></li>
-        <li><a href="sveden/index.html">Сведения об ОО</a></li>
+        <li class="has-sub"><a href="sveden/index.html" aria-haspopup="true">Сведения об ОО</a><ul class="submenu submenu--wide"><li><a href="sveden/common/index.html">Основные сведения</a></li><li><a href="sveden/struct/index.html">Структура и органы управления образовательной организацией</a></li><li><a href="sveden/document/index.html">Документы</a></li><li><a href="sveden/education/index.html">Образование</a></li><li><a href="sveden/eduStandarts/index.html">Образовательные стандарты и требования</a></li><li><a href="sveden/managers/index.html">Руководство</a></li><li><a href="sveden/employees/index.html">Педагогический состав</a></li><li><a href="sveden/objects/index.html">Материально-техническое обеспечение и оснащённость образовательного процесса. Доступная среда</a></li><li><a href="sveden/paid_edu/index.html">Платные образовательные услуги</a></li><li><a href="sveden/budget/index.html">Финансово-хозяйственная деятельность</a></li><li><a href="sveden/vacant/index.html">Вакантные места для приёма (перевода) обучающихся</a></li><li><a href="sveden/grants/index.html">Стипендии и меры поддержки обучающихся</a></li><li><a href="sveden/inter/index.html">Международное сотрудничество</a></li><li><a href="sveden/catering/index.html">Организация питания в образовательной организации</a></li></ul></li>
         <li><a href="index.html#news">Новости</a></li>
-        <li><a href="index.html#parents">Родителям</a></li>
+        <li class="has-sub"><a href="index.html#parents" aria-haspopup="true">Родителям</a><ul class="submenu"><li><a href="https://www.gosuslugi.ru/" rel="noopener">Запись в 1-й класс</a></li><li><a href="https://myschool.edu.ru/" rel="noopener">Электронный дневник</a></li><li><a href="sveden/catering/index.html">Меню питания</a></li><li><a href="sveden/vacant/index.html">Свободные места</a></li><li><a href="sveden/paid_edu/index.html">Платные услуги</a></li><li><a href="sveden/document/index.html">Документы</a></li></ul></li>
         <li><a href="contacts.html">Контакты</a></li>
       </ul>
     </nav>
+    <a class="btn btn--primary btn--sm header__cta" href="https://www.gosuslugi.ru/" rel="noopener">Подать заявление</a>
   </div>
 </header>
 
 <main id="main">
 
   <section class="hero">
-    <div class="container">
+    <div class="container hero__top">
       <div>
-        <span class="hero__eyebrow">Приём в 1-й класс на 2027/2028 учебный год — с 1 апреля</span>
-        <h1>МБОУ «СОШ № 1»</h1>
-        <p class="lead">Современная школа, где каждый ученик раскрывает свои способности. Начальное, основное и среднее общее образование в городе Примерск.</p>
-        <div class="hero__actions">
-          <a class="btn btn--primary" href="sveden/index.html">Сведения об образовательной организации</a>
-          <a class="btn btn--ghost" href="contacts.html">Контакты</a>
-        </div>
+        <h1>СОШ № 19</h1>
+        <p class="lead">Современная школа, где каждый ученик раскрывает свои способности</p>
       </div>
-      <div class="hero__card">
-        <div class="hero__stats">
-          <div class="stat"><b>825</b><span>обучающихся</span></div>
-          <div class="stat"><b>64</b><span>педагога</span></div>
-          <div class="stat"><b>50+</b><span>кружков и секций</span></div>
-          <div class="stat"><b>1975</b><span>год основания</span></div>
+      <div class="hero-pill">
+        <p>Приём в 1-й класс на 2027/2028 учебный год начинается 1 апреля <span class="ico" aria-hidden="true">🎒</span></p>
+        <a class="btn btn--primary btn--sm" href="https://www.gosuslugi.ru/" rel="noopener">Подать заявление</a>
+      </div>
+    </div>
+    <div class="container" style="margin-top:2.2rem">
+      <div class="tiles">
+        <a class="tile ph ph-1" href="sveden/index.html"><h3>Сведения об образовательной организации</h3><span class="tile__chip">14 подразделов</span></a>
+        <a class="tile ph ph-2" href="index.html#news"><h3>Новости и события</h3><span class="tile__chip">Жизнь школы</span></a>
+        <a class="tile ph ph-3" href="index.html#parents"><h3>Родителям и ученикам</h3><span class="tile__chip">Полезное</span></a>
+        <a class="tile ph ph-4" href="sveden/catering/index.html"><h3>Питание</h3><span class="tile__chip">Меню</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="promo">
+        <div class="promo__img ph ph-light" role="img" aria-label="Фото школы"></div>
+        <div class="promo__body">
+          <h2>Сведения об образовательной организации</h2>
+          <p>Вся официальная информация о школе в соответствии с Приказом Рособрнадзора № 1493: документы, образовательные программы, педагогический состав, питание, вакантные места и многое другое.</p>
+          <a class="btn btn--primary" href="sveden/index.html">Перейти в раздел</a>
         </div>
       </div>
     </div>
@@ -91,30 +111,47 @@
 
   <section class="section">
     <div class="container">
-      <div class="section__head">
-        <div><h2>Сведения об образовательной организации</h2><p>Обязательный раздел по Приказу Рособрнадзора № 1493</p></div>
-        <a class="btn btn--ghost" href="sveden/index.html">Все 14 подразделов →</a>
-      </div>
       <div class="grid grid--4">
-        <a class="card" href="sveden/common/index.html"><span class="card__icon" aria-hidden="true">🏫</span><h3>Основные сведения</h3></a>
-        <a class="card" href="sveden/struct/index.html"><span class="card__icon" aria-hidden="true">🗂️</span><h3>Структура и органы управления образовательной организацией</h3></a>
-        <a class="card" href="sveden/document/index.html"><span class="card__icon" aria-hidden="true">📄</span><h3>Документы</h3></a>
-        <a class="card" href="sveden/education/index.html"><span class="card__icon" aria-hidden="true">🎓</span><h3>Образование</h3></a>
-        <a class="card" href="sveden/eduStandarts/index.html"><span class="card__icon" aria-hidden="true">📘</span><h3>Образовательные стандарты и требования</h3></a>
-        <a class="card" href="sveden/managers/index.html"><span class="card__icon" aria-hidden="true">👤</span><h3>Руководство</h3></a>
-        <a class="card" href="sveden/employees/index.html"><span class="card__icon" aria-hidden="true">👩‍🏫</span><h3>Педагогический состав</h3></a>
-        <a class="card" href="sveden/objects/index.html"><span class="card__icon" aria-hidden="true">🧪</span><h3>Материально-техническое обеспечение и оснащённость образовательного процесса. Доступная среда</h3></a>
+        <a class="card" href="sveden/common/index.html"><span class="card__icon" aria-hidden="true">🏫</span><h3>Основные сведения</h3><p>/sveden/common</p></a>
+        <a class="card" href="sveden/struct/index.html"><span class="card__icon" aria-hidden="true">🗂️</span><h3>Структура и органы управления образовательной организацией</h3><p>/sveden/struct</p></a>
+        <a class="card" href="sveden/document/index.html"><span class="card__icon" aria-hidden="true">📄</span><h3>Документы</h3><p>/sveden/document</p></a>
+        <a class="card" href="sveden/education/index.html"><span class="card__icon" aria-hidden="true">🎓</span><h3>Образование</h3><p>/sveden/education</p></a>
+        <a class="card" href="sveden/eduStandarts/index.html"><span class="card__icon" aria-hidden="true">📘</span><h3>Образовательные стандарты и требования</h3><p>/sveden/eduStandarts</p></a>
+        <a class="card" href="sveden/managers/index.html"><span class="card__icon" aria-hidden="true">👤</span><h3>Руководство</h3><p>/sveden/managers</p></a>
+        <a class="card" href="sveden/employees/index.html"><span class="card__icon" aria-hidden="true">👩‍🏫</span><h3>Педагогический состав</h3><p>/sveden/employees</p></a>
+        <a class="card" href="sveden/objects/index.html"><span class="card__icon" aria-hidden="true">🧪</span><h3>Материально-техническое обеспечение и оснащённость образовательного процесса. Доступная среда</h3><p>/sveden/objects</p></a>
       </div>
     </div>
   </section>
 
-  <section class="section section--soft" id="news">
+  <section class="section">
     <div class="container">
-      <div class="section__head"><h2>Новости</h2></div>
+      <div class="promo promo--reverse">
+        <div class="promo__img ph ph-light" role="img" aria-label="Фото педагогов"></div>
+        <div class="promo__body">
+          <h2>Наша школа</h2>
+          <p>Школа – это особый мир, мир изумительный и необычный. С 1974 года мы даём начальное, основное и среднее общее образование на русском и монгольском языках.</p>
+          <div class="stats">
+            <div><b>36</b><span>педагогов</span></div>
+            <div><b>4</b><span>в администрации</span></div>
+            <div><b>2</b><span>языка обучения</span></div>
+            <div><b>1974</b><span>год основания</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="news">
+    <div class="container">
+      <div class="section__head"><h2>Новости</h2><a class="btn btn--ghost" href="index.html#news">Все новости</a></div>
       <div class="grid grid--3">
-        <article class="card"><div class="news-img" role="img" aria-label="Иллюстрация к новости"></div><div class="card__date">20 ноября 2026</div><h3>Школьный этап всероссийской олимпиады завершён</h3><p>Подведены итоги: 46 учащихся вышли в муниципальный этап.</p></article>
-        <article class="card"><div class="news-img" role="img" aria-label="Иллюстрация к новости"></div><div class="card__date">14 ноября 2026</div><h3>День открытых дверей для будущих первоклассников</h3><p>Приглашаем родителей познакомиться с учителями и программами.</p></article>
-        <article class="card"><div class="news-img" role="img" aria-label="Иллюстрация к новости"></div><div class="card__date">05 ноября 2026</div><h3>Новая лаборатория «Точка роста»</h3><p>Открыт кабинет робототехники и цифровых лабораторий.</p></article>
+        <article class="card news-card"><h3>Результаты соревнований по “Пионерболу” среди 6-х классов</h3><p>Мальчики: 1 место – 6а, 2 место – 6б, 3 место – 6в. Девочки: 1 место – 6в, 2 место – 6б, 3 место – 6а.</p><div class="card__date">11.02.2026</div></article>
+        <article class="card news-card"><h3>Участие в III Международных инженерных соревнованиях</h3><p>21 октября 2025 года состоялись III Международные инженерные соревнования, в которых приняли участие 155 команд из 11 стран: Абхазии, Беларуси, Грузии,…</p><div class="card__date">29.10.2025</div></article>
+        <article class="card news-card"><h3>Онлайн-зачет по финансовой грамотности</h3><p>Ежегодно в октябре месяце банк России проводит онлайн-зачет по финансовой грамотности. Третий год подряд учащиеся МБОУ СОШ № 19 «ПГС Предприятие Эрдэнэт» под…</p><div class="card__date">29.10.2025</div></article>
+        <article class="card news-card"><h3>Интеллектуальная игра «БиоМатиус» среди 11 классов</h3><p>21 октября 2025 года в Средней общеобразовательной школе №19 ПГС «Предприятие Эрдэнэт» в рамках недели самостоятельной работы прошла Интеллектуальная игра…</p><div class="card__date">22.10.2025</div></article>
+        <article class="card news-card"><h3>День открытых дверей в школе</h3><p>8 октября 2025 года российская школа № 19 гостеприимно распахнула свои двери для родителей обучающихся 1-12 классов. Проведение дня открытых дверей стало…</p><div class="card__date">10.10.2025</div></article>
+        <article class="card news-card"><h3>Участие в международном турнире «Сила ума»</h3><p>07 октября 2025 года в нашей школе прошел захватывающий математический турнир под названием “Сила ума”. Это мероприятие собрало увлеченных математикой…</p><div class="card__date">09.10.2025</div></article>
       </div>
     </div>
   </section>
@@ -123,7 +160,7 @@
     <div class="container">
       <div class="section__head"><h2>Родителям и ученикам</h2></div>
       <div class="grid grid--4">
-        <a class="card" href="https://www.gosuslugi.ru/" rel="noopener"><span class="card__icon" aria-hidden="true">📝</span><h3>Запись в 1-й класс</h3><p>Подача заявления через Госуслуги</p></a>
+        <a class="card" href="https://www.gosuslugi.ru/" rel="noopener"><span class="card__icon" aria-hidden="true">📝</span><h3>Запись в 1-й класс</h3><p>Заявление через Госуслуги</p></a>
         <a class="card" href="https://myschool.edu.ru/" rel="noopener"><span class="card__icon" aria-hidden="true">📚</span><h3>Электронный дневник</h3><p>ФГИС «Моя школа»</p></a>
         <a class="card" href="sveden/catering/index.html"><span class="card__icon" aria-hidden="true">🍎</span><h3>Меню питания</h3><p>Ежедневное меню столовой</p></a>
         <a class="card" href="sveden/vacant/index.html"><span class="card__icon" aria-hidden="true">🪑</span><h3>Свободные места</h3><p>Вакантные места для приёма</p></a>
@@ -133,11 +170,16 @@
 
   <section class="section">
     <div class="container">
-      <!-- Замените этот блок на виджет Платформы обратной связи (ПОС) Госуслуг:
-           код выдаётся в личном кабинете организации на pos.gosuslugi.ru -->
+      <!-- Замените этот блок на виджет ПОС Госуслуг (код — в кабинете pos.gosuslugi.ru) -->
       <div class="pos-banner" id="pos-widget">
-        <div><h2>Не убедились в ответе? Напишите нам через Госуслуги</h2><p>Платформа обратной связи — обращения, жалобы и предложения</p></div>
-        <a class="btn" href="https://pos.gosuslugi.ru/" rel="noopener">Написать обращение</a>
+        <div>
+          <h2>Есть вопрос или предложение?</h2>
+          <p>Напишите нам через платформу обратной связи Госуслуг — мы ответим в установленный срок.</p>
+        </div>
+        <div>
+          <a class="btn btn--primary" href="https://pos.gosuslugi.ru/" rel="noopener">Написать обращение</a>
+          <small>Для отправки потребуется подтверждённая учётная запись Госуслуг</small>
+        </div>
       </div>
     </div>
   </section>
@@ -146,11 +188,22 @@
 
 <footer class="footer">
   <div class="container">
+   <div class="footer__panel">
     <div class="footer__grid">
       <div>
-        <h3>МБОУ «СОШ № 1»</h3>
-        <p>Муниципальное бюджетное общеобразовательное учреждение «Средняя общеобразовательная школа № 1»</p>
-        <p>123456, Российская Федерация, Примерская область, г. Примерск, ул. Школьная, д. 1<br>Тел.: +7 (000) 000-00-00 · E-mail: <a href="mailto:school1@example.ru">school1@example.ru</a></p>
+        <a class="brand" href="index.html">
+          <span class="brand__logo" aria-hidden="true">№19</span>
+          <span class="brand__name">СОШ № 19<small>г. Эрдэнэт</small></span>
+        </a>
+        <p>Средняя общеобразовательная школа № 19 ПГС «Предприятие Эрдэнэт»</p>
+      </div>
+      <div>
+        <h3>Контакты</h3>
+        <ul>
+          <li>61027, Монголия, Орхон аймак, г. Эрдэнэт, сомон Баян-Ундэр</li>
+          <li><a href="tel:+97675773858">+976 7577-3858</a></li>
+          <li><a href="mailto:school19@erdenetmc.mn">school19@erdenetmc.mn</a></li>
+        </ul>
       </div>
       <div>
         <h3>Разделы</h3>
@@ -168,16 +221,17 @@
           <li><a href="https://edu.gov.ru/" rel="noopener">Минпросвещения России</a></li>
           <li><a href="https://obrnadzor.gov.ru/" rel="noopener">Рособрнадзор</a></li>
           <li><a href="https://www.gosuslugi.ru/" rel="noopener">Госуслуги</a></li>
-          <li><a href="https://fgis.gosuslugi.ru/" rel="noopener">ФГИС «Моя школа»</a></li>
+          <li><a href="https://myschool.edu.ru/" rel="noopener">ФГИС «Моя школа»</a></li>
         </ul>
       </div>
     </div>
     <div class="footer__bottom">
-      <span>© МБОУ «СОШ № 1», 2026. Все права защищены.</span>
+      <span>© СОШ № 19, 2026. Все права защищены.</span>
       <span><a href="docs/privacy-policy.pdf">Политика обработки персональных данных</a></span>
     </div>
+   </div>
   </div>
 </footer>
-<script src="assets/js/main.js"></script>
+<script src="assets/js/main.js?v=a96fb3e6"></script>
 </body>
 </html>

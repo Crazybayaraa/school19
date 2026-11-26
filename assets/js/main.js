@@ -27,21 +27,27 @@
     });
     document.querySelectorAll('.btn-a11y').forEach(function (b) {
       b.setAttribute('aria-pressed', s && s.on ? 'true' : 'false');
-      b.lastChild.textContent = s && s.on ? ' Обычная версия' : ' Версия для слабовидящих';
+      b.lastChild.textContent = ' ' + b.getAttribute(s && s.on ? 'data-label-off' : 'data-label-on');
     });
   }
 
-  var state = load() || { on: false, fs: '1', scheme: 'wb', noimg: false, ls: false };
+  var DEFAULTS = { on: false, fs: '1', scheme: 'wb', noimg: false, ls: false };
+  function fresh() { return JSON.parse(JSON.stringify(DEFAULTS)); }
+  var state = load() || fresh();
   apply(state);
 
   document.addEventListener('click', function (e) {
     var t = e.target.closest('button');
     if (!t) return;
     if (t.classList.contains('btn-a11y')) {
-      state.on = !state.on;
+      // Выключение = полный сброс к обычной версии
+      if (state.on) { state = fresh(); } else { state.on = true; }
     } else if (t.hasAttribute('data-a11y-set')) {
       var p = t.getAttribute('data-a11y-set').split(':');
-      state[p[0]] = p[1] === 'true' ? true : p[1] === 'false' ? false : p[1];
+      var v = p[1] === 'true' ? true : p[1] === 'false' ? false : p[1];
+      // Повторное нажатие на «Выкл»/«Большой» возвращает обычное значение
+      if (typeof v === 'boolean' && state[p[0]] === v) v = !v;
+      state[p[0]] = v;
     } else if (t.classList.contains('nav-toggle')) {
       var nav = document.getElementById('main-nav');
       var open = nav.classList.toggle('is-open');
